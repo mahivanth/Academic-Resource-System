@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slot Timings - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/theme.js"></script>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <%- include('../partials/header') %>
+
+            <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center;">
+                <h1><i class="fas fa-clock"></i> Slot Timings</h1>
+                <a href="/admin/slot-timings/create" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Slot Timing
+                </a>
+            </div>
+
+            <%- include('../partials/messages') %>
+
+                <p style="margin-bottom: 20px; color: #666;">
+                    Create slot timings here. These can then be assigned to resources when configuring slots.
+                </p>
+
+                <div class="glass-card" style="max-width: 800px;">
+                    <% if (slotTimings && slotTimings.length > 0) { %>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Label</th>
+                                        <th>Start Time</th>
+                                        <th>End Time</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% slotTimings.forEach(function(st) { %>
+                                        <tr>
+                                            <td><%= st.label || '-' %></td>
+                                            <td><%= st.startTime %></td>
+                                            <td><%= st.endTime %></td>
+                                            <td>
+                                                <a href="/admin/slot-timings/<%= st._id %>/edit" class="btn btn-sm btn-secondary">Edit</a>
+                                                <a href="/admin/slot-timings/<%= st._id %>/delete" class="btn btn-sm btn-google"
+                                                    onclick="return confirm('Delete this slot timing?')">Delete</a>
+                                            </td>
+                                        </tr>
+                                        <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+                        <% } else { %>
+                            <p>No slot timings defined yet. Create one to get started.</p>
+                            <% } %>
+
+                                <div style="margin-top: 20px;">
+                                    <a href="/admin/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+                                </div>
+                </div>
+    </div>
+</body>
+
+</html>

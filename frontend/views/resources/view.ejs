@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resource Details - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/theme.js"></script>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <%- include('../partials/header') %>
+
+            <div class="glass-card" style="margin: 0 auto; max-width: 600px;">
+                <%- include('../partials/messages') %>
+                    <h2>
+                        <% if (user.role==='faculty' ) { %>
+                            <%= resource.name %>
+                                <% } else { %>
+                                    Book <%= resource.name %>
+                                        <% } %>
+                    </h2>
+                    <p><strong>Capacity:</strong>
+                        <%= resource.capacity %>
+                    </p>
+
+                    <% if (user.role==='faculty' ) { %>
+                        <div class="alert alert-info">
+                            <% if (typeof mySlots !=='undefined' && mySlots.length> 0) { %>
+                                <p><strong><i class="far fa-clock"></i> Your Assigned Slots:</strong></p>
+                                <ul style="list-style: none; padding-left: 0; margin-bottom: 0;">
+                                    <% mySlots.forEach(function(slot) { %>
+                                        <li>
+                                            <%= slot.startTime %> - <%= slot.endTime %>
+                                        </li>
+                                        <% }); %>
+                                </ul>
+                                <% } %>
+                        </div>
+                        <% } else { %>
+                            <form action="/resources/<%= resource._id %>/book" method="POST">
+                                <div class="form-group">
+                                    <label>Date</label>
+                                    <input type="date" name="date" required id="bookingDate">
+                                </div>
+                                <script>
+                                    const dateInput = document.getElementById('bookingDate');
+                                    const today = new Date().toISOString().split('T')[0];
+                                    dateInput.min = today;
+                                    dateInput.value = today;
+
+                                    function formatTime(timeString) {
+                                        const [hourString, minute] = timeString.split(":");
+                                        const hour = +hourString % 24;
+                                        return (hour % 12 || 12) + ":" + minute + (hour < 12 ? " AM" : " PM");
+                                    }
+                                </script>
+
+                                <% if(resource.slotTimings && resource.slotTimings.length> 0) { %>
+                                    <div class="form-group">
+                                        <label>Select Time Slot</label>
+                                        <select name="slotIndex" id="slotSelect" required
+                                            style="width: 100%; padding: 10px; border-radius: 5px;">
+                                            <option value="">-- Choose a Slot --</option>
+                                            <% resource.slotTimings.forEach((slot, index)=> { %>
+                                                <option value="<%= index %>">
+                                                    <script>document.write(formatTime("<%= slot.startTime %>") + " - " + formatTime("<%= slot.endTime %>"));</script>
+                                                </option>
+                                                <% }); %>
+                                        </select>
+                                        <small id="availabilityStatus" style="display: block; margin-top: 5px; color: #666;"></small>
+                                    </div>
+
+                                    <% } else { %>
+                                        <div class="alert alert-warning">
+                                            No slots available for this resource. Please contact Admin.
+                                        </div>
+                                        <% } %>
+
+                                        <% if(user.role==='admin' ) { %>
+                                            <hr>
+                                            <div class="form-group">
+                                                <label>Assign to Student (ID / Email / Roll No)</label>
+                                                <input type="text" name="studentId"
+                                                    placeholder="Enter Student ID, Email, or Roll No (Optional)">
+                                                <small>Leave blank to book for yourself</small>
+                                            </div>
+                                            <% } %>
+
+                                                <button type="submit" class="btn btn-primary">Request
+                                                    Booking</button>
+                            </form>
+                            
+                            <% if(resource.slotTimings && resource.slotTimings.length > 0) { %>
+                            <script>
+                                (function() {
+                                    const dateInput = document.getElementById('bookingDate');
+                                    const slotSelect = document.getElementById('slotSelect');
+                                    const statusEl = document.getElementById('availabilityStatus');
+                                    
+                                    async function updateAvailability() {
+                                        const selectedDate = dateInput.value;
+                                        const submitBtn = document.querySelector('button[type="submit"]');
+                                        if (!selectedDate) return;
+                                        
+                                        statusEl.innerText = "Checking availability...";
+                                        statusEl.style.color = "#666";
+                                        
+                                        try {
+                                            const response = await fetch(`/resources/<%= resource._id %>/availability?date=${selectedDate}`);
+                                            const data = await response.json();
+                                            
+                                            if (data.slots) {
+                                                const currentValue = slotSelect.value;
+                                                slotSelect.innerHTML = '<option value="">-- Choose a Slot --</option>';
+                                                
+                                                let availableCount = 0;
+                                                data.slots.forEach(slotData => {
+                                                    if (slotData.available > 0) {
+                                                        const option = document.createElement('option');
+                                                        option.value = slotData.index;
+                                                        option.innerText = `${formatTime(slotData.startTime)} - ${formatTime(slotData.endTime)} (${slotData.available} remaining)`;
+                                                        if (currentValue == slotData.index) option.selected = true;
+                                                        slotSelect.appendChild(option);
+                                                        availableCount++;
+                                                    }
+                                                });
+                                                
+                                                if (availableCount === 0) {
+                                                    statusEl.innerText = "No slots available for this date.";
+                                                    statusEl.style.color = "red";
+                                                    if (submitBtn) {
+                                                        submitBtn.disabled = true;
+                                                        submitBtn.style.opacity = "0.5";
+                                                    }
+                                                } else {
+                                                    statusEl.innerText = `${availableCount} slots available.`;
+                                                    statusEl.style.color = "#666";
+                                                    if (submitBtn) {
+                                                        submitBtn.disabled = false;
+                                                        submitBtn.style.opacity = "1";
+                                                    }
+                                                }
+                                            }
+                                        } catch (err) {
+                                            console.error("Error fetching availability:", err);
+                                            statusEl.innerText = "Error checking availability.";
+                                        }
+                                    }
+                                    
+                                    dateInput.addEventListener('change', updateAvailability);
+                                    updateAvailability(); // Initial check
+                                })();
+                            </script>
+                            <% } %>
+                            </form>
+                            <% } %>
+            </div>
+    </div>
+</body>
+
+</html>

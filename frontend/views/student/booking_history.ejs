@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking History - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/theme.js"></script>
+    <style>
+        .booking-row[data-even="true"] { background-color: #f8fafc; }
+        .booking-row[data-even="false"] { background-color: #fff; }
+        .booking-row:hover { background-color: #eff6ff !important; }
+        .status-badge[data-status="pending"] { background-color: #f59e0b; }
+        .status-badge[data-status="approved"] { background-color: #10b981; }
+        .status-badge[data-status="cancelled"] { background-color: #ef4444; }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <%- include('../partials/header') %>
+    <div style="padding:30px;">
+        <h1 style="margin-bottom:5px;"><i class="fas fa-calendar-alt" style="color:#3b82f6;margin-right:10px;"></i>My Booking History</h1>
+        <p style="color:#64748b; margin-bottom:28px;">All your resource/slot bookings.</p>
+
+        <% if(typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+            <div class="alert alert-success"><%= success_msg %></div>
+        <% } %>
+        <% if(typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+            <div class="alert alert-danger"><%= error_msg %></div>
+        <% } %>
+
+        <% if(bookings.length === 0) { %>
+            <div class="glass-card" style="text-align:center; padding:60px 20px;">
+                <i class="fas fa-calendar-times" style="font-size:3rem; color:#cbd5e1; margin-bottom:16px; display:block;"></i>
+                <h3 style="color:#64748b;">No booking records yet</h3>
+                <p style="color:#94a3b8;">Go to <a href="/resources" style="color:#3b82f6;">Resources</a> to make a booking.</p>
+            </div>
+        <% } else { %>
+            <div class="glass-card" style="overflow:hidden;">
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:linear-gradient(135deg,#1e40af,#3b82f6); color:white;">
+                            <th style="padding:14px 16px; text-align:left;">Resource</th>
+                            <th style="padding:14px 16px; text-align:left;">Date</th>
+                            <th style="padding:14px 16px; text-align:left;">Time Slot</th>
+                            <th style="padding:14px 16px; text-align:left;">Status</th>
+                            <th style="padding:14px 16px; text-align:left;">Booked On</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% bookings.forEach((b, i) => { %>
+                            <tr class="booking-row" style="border-bottom: 1px solid #e2e8f0;" data-even="<%= i % 2 === 0 %>">
+                                <td style="padding:13px 16px; font-weight:500; color:#1e293b;">
+                                    <i class="fas fa-building" style="color:#3b82f6; margin-right:6px;"></i>
+                                    <%= b.resource ? b.resource.name : 'N/A' %>
+                                </td>
+                                <td style="padding:13px 16px; color:#475569;">
+                                    <%= b.date ? new Date(b.date).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '—' %>
+                                </td>
+                                <td style="padding:13px 16px; color:#475569;">
+                                    <i class="fas fa-clock" style="color:#64748b; margin-right:4px;"></i>
+                                    <%= b.startTime %> – <%= b.endTime %>
+                                </td>
+                                <td style="padding:13px 16px;">
+                                    <span class="status-badge" style="color: white; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; text-transform: capitalize;" data-status="<%= b.status %>">
+                                        <%= b.status %>
+                                    </span>
+                                </td>
+                                <td style="padding:13px 16px; color:#94a3b8; font-size:0.85rem;">
+                                    <%= b.createdAt ? new Date(b.createdAt).toLocaleDateString() : '—' %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } %>
+    </div>
+</div>
+</body>
+</html>

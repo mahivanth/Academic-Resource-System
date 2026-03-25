@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Library - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .tab-btn {
+            padding: 9px 20px;
+            border: none;
+            background: #f1f5f9;
+            color: #64748b;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white;
+            box-shadow: 0 4px 12px rgba(59,130,246,0.3);
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge-pending  { background:#fef3c7; color:#92400e; }
+        .badge-borrowed { background:#dbeafe; color:#1e40af; }
+        .badge-returned { background:#d1fae5; color:#065f46; }
+        .badge-rejected { background:#fee2e2; color:#991b1b; }
+        .add-form { display:none; }
+        .add-form.open { display:block; }
+    </style>
+    <script src="/js/theme.js"></script>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <%- include('../partials/header') %>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+            <div>
+                <h1 style="margin-bottom:4px;"><i class="fas fa-book" style="color:#3b82f6; margin-right:10px;"></i>Manage Library</h1>
+                <p style="margin:0; color:#64748b;">Add books and manage student borrow requests.</p>
+            </div>
+            <a href="/library" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Catalog</a>
+        </div>
+
+        <%- include('../partials/messages') %>
+
+        <!-- Books Management -->
+        <button class="btn btn-primary" style="margin-bottom:16px;" onclick="document.getElementById('addBookForm').classList.toggle('open')">
+            <i class="fas fa-plus"></i> Add New Book
+        </button>
+
+        <div id="addBookForm" class="add-form glass-card" style="margin-bottom:24px; padding:24px;">
+            <h3 style="margin-top:0; margin-bottom:20px;"><i class="fas fa-plus-circle" style="color:#3b82f6; margin-right:8px;"></i>Add Book</h3>
+            <form action="/library/books" method="POST">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Title *</label>
+                        <input type="text" name="title" class="form-control" required placeholder="Book title">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Author *</label>
+                        <input type="text" name="author" class="form-control" required placeholder="Author name">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>ISBN</label>
+                        <input type="text" name="isbn" class="form-control" placeholder="e.g., 978-3-16-148410-0">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Category</label>
+                        <select name="category" class="form-control">
+                            <% categories.forEach(cat => { %>
+                                <option value="<%= cat %>"><%= cat %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Total Copies</label>
+                        <input type="number" name="totalCopies" class="form-control" value="1" min="1">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Description</label>
+                        <input type="text" name="description" class="form-control" placeholder="Short description (optional)">
+                    </div>
+                </div>
+                <div style="margin-top:16px; display:flex; gap:10px;">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Add Book</button>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('addBookForm').classList.remove('open')">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Books Table -->
+        <div class="glass-card" style="padding:0; overflow:hidden;">
+            <table style="width:100%; border-collapse:collapse;">
+                <thead>
+                    <tr style="background:#f8fafc;">
+                        <th style="padding:14px 18px; text-align:left; font-size:0.8rem; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">Title / Author</th>
+                        <th style="padding:14px 18px; text-align:left; font-size:0.8rem; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">Category</th>
+                        <th style="padding:14px 18px; text-align:left; font-size:0.8rem; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">Copies</th>
+                        <th style="padding:14px 18px; text-align:left; font-size:0.8rem; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="bookTableBody">
+                    <% if(books.length > 0) { %>
+                        <%- include('partials/book_rows') %>
+                    <% } else { %>
+                        <tr><td colspan="4" style="padding:30px; text-align:center; color:#94a3b8;">No books in the library yet. Add one above!</td></tr>
+                    <% } %>
+                </tbody>
+            </table>
+            <% if(books.length > 0 && page < totalPages) { %>
+                <div style="text-align: center; padding: 15px; background: #f8fafc; border-top: 1px solid #f1f5f9;">
+                    <button id="loadMoreBtn" class="btn btn-secondary" data-page="<%= page %>" data-total="<%= totalPages %>" style="padding: 8px 20px;">Load More</button>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Edit Book Modal -->
+    <div id="editModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:16px; padding:28px; width:540px; max-width:95vw; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <h3 style="margin-top:0; margin-bottom:20px;"><i class="fas fa-edit" style="color:#3b82f6; margin-right:8px;"></i>Edit Book</h3>
+            <form id="editForm" method="POST">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                    <div class="form-group" style="margin-bottom:0;"><label>Title *</label><input type="text" name="title" id="editTitle" class="form-control" required></div>
+                    <div class="form-group" style="margin-bottom:0;"><label>Author *</label><input type="text" name="author" id="editAuthor" class="form-control" required></div>
+                    <div class="form-group" style="margin-bottom:0;"><label>ISBN</label><input type="text" name="isbn" id="editIsbn" class="form-control"></div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Category</label>
+                        <select name="category" id="editCategory" class="form-control">
+                            <% categories.forEach(cat => { %><option value="<%= cat %>"><%= cat %></option><% }) %>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;"><label>Total Copies</label><input type="number" name="totalCopies" id="editCopies" class="form-control" min="1"></div>
+                    <div class="form-group" style="margin-bottom:0;"><label>Description</label><input type="text" name="description" id="editDesc" class="form-control"></div>
+                </div>
+                <div style="margin-top:18px; display:flex; gap:10px;">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(name, btn) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        // Handle dynamically added edit buttons using event delegation
+        document.getElementById('bookTableBody')?.addEventListener('click', (e) => {
+            const btn = e.target.closest('.edit-btn');
+            if(btn) {
+                openEditModal(
+                    btn.dataset.id,
+                    btn.dataset.title,
+                    btn.dataset.author,
+                    btn.dataset.isbn,
+                    btn.dataset.category,
+                    btn.dataset.copies,
+                    btn.dataset.desc
+                );
+            }
+        });
+
+        function openEditModal(id, title, author, isbn, category, copies, desc) {
+            document.getElementById('editForm').action = '/library/books/' + id + '/edit';
+            document.getElementById('editTitle').value = title;
+            document.getElementById('editAuthor').value = author;
+            document.getElementById('editIsbn').value = isbn || '';
+            document.getElementById('editCategory').value = category;
+            document.getElementById('editCopies').value = copies;
+            document.getElementById('editDesc').value = desc || '';
+            document.getElementById('editModal').style.display = 'flex';
+        }
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+        
+        // Auto-open tab from query param e.g. ?tab=borrows
+        const urlParams = new URLSearchParams(window.location.search);
+        const activeTab = urlParams.get('tab');
+        if (activeTab === 'borrows') {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            const borrowsTab = document.getElementById('tab-borrows');
+            if (borrowsTab) borrowsTab.classList.add('active');
+            const btns = document.querySelectorAll('.tab-btn');
+            if (btns.length > 1) btns[1].classList.add('active');
+        }
+
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener('click', async () => {
+                let currentPage = parseInt(loadMoreBtn.getAttribute('data-page'));
+                const totalPages = parseInt(loadMoreBtn.getAttribute('data-total'));
+                if (currentPage >= totalPages) return;
+                
+                loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+                loadMoreBtn.disabled = true;
+
+                const nextPage = currentPage + 1;
+                const url = new URL(window.location.href);
+                url.searchParams.set('page', nextPage);
+                url.searchParams.set('ajax', 'true');
+
+                try {
+                    const response = await fetch(url.toString());
+                    const html = await response.text();
+                    document.getElementById('bookTableBody').insertAdjacentHTML('beforeend', html);
+                    
+                    loadMoreBtn.setAttribute('data-page', nextPage);
+                    if (nextPage >= totalPages) {
+                        loadMoreBtn.style.display = 'none';
+                    } else {
+                        loadMoreBtn.innerHTML = 'Load More';
+                        loadMoreBtn.disabled = false;
+                    }
+                } catch (err) {
+                    console.error('Error loading more books:', err);
+                    loadMoreBtn.innerHTML = 'Error. Try Again';
+                    loadMoreBtn.disabled = false;
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

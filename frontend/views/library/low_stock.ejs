@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Low Stock Alert - ARUS Library</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/theme.js"></script>
+    <style>
+        .stock-row[data-even="true"] { background-color: #fffbeb; }
+        .stock-row[data-even="false"] { background-color: #fff; }
+        .stock-badge[data-out-of-stock="true"] { background-color: #ef4444; }
+        .stock-badge[data-out-of-stock="false"] { background-color: #f59e0b; }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <%- include('../partials/header') %>
+    <div style="padding:30px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; flex-wrap:wrap; gap:12px;">
+            <div>
+                <h1 style="margin-bottom:4px;"><i class="fas fa-exclamation-triangle" style="color:#f59e0b; margin-right:10px;"></i>Low Stock Alert</h1>
+                <p style="color:#64748b; margin:0;">Books with available copies at or below the threshold.</p>
+            </div>
+            <form method="GET" action="/library/low-stock" style="display:flex; align-items:center; gap:10px;">
+                <label style="color:#475569; font-weight:500;">Threshold:</label>
+                <input type="number" name="threshold" value="<%= threshold %>" min="0" max="20"
+                    style="width:70px; padding:8px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:0.9rem;">
+                <button type="submit" class="btn btn-primary" style="padding:8px 16px;">Apply</button>
+            </form>
+        </div>
+
+        <% if(typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+            <div class="alert alert-success"><%= success_msg %></div>
+        <% } %>
+
+        <% if(books.length === 0) { %>
+            <div class="glass-card" style="text-align:center; padding:60px 20px;">
+                <i class="fas fa-check-circle" style="font-size:3rem; color:#10b981; margin-bottom:16px; display:block;"></i>
+                <h3 style="color:#64748b;">All books are well-stocked!</h3>
+                <p style="color:#94a3b8;">No books below threshold of <%= threshold %> copies.</p>
+            </div>
+        <% } else { %>
+            <div style="background:#fffbeb; border:1px solid #fcd34d; border-radius:12px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:center; gap:12px;">
+                <i class="fas fa-exclamation-triangle" style="color:#f59e0b; font-size:1.2rem;"></i>
+                <span style="color:#92400e; font-weight:500;"><%= books.length %> book(s) need restocking. Consider ordering new copies.</span>
+            </div>
+            <div class="glass-card" style="overflow:hidden;">
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:linear-gradient(135deg,#92400e,#f59e0b); color:white;">
+                            <th style="padding:14px 16px; text-align:left;">Book Title</th>
+                            <th style="padding:14px 16px; text-align:left;">Author</th>
+                            <th style="padding:14px 16px; text-align:left;">Category</th>
+                            <th style="padding:14px 16px; text-align:left;">Available Copies</th>
+                            <th style="padding:14px 16px; text-align:left;">Total Copies</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% books.forEach((b, i) => { %>
+                            <tr class="stock-row" style="border-bottom: 1px solid #e2e8f0;" data-even="<%= i % 2 === 0 %>">
+                                <td style="padding:13px 16px; font-weight:500; color:#1e293b;"><%= b.title %></td>
+                                <td style="padding:13px 16px; color:#475569;"><%= b.author %></td>
+                                <td style="padding:13px 16px; color:#475569;"><%= b.category || '—' %></td>
+                                <td style="padding:13px 16px;">
+                                    <span class="stock-badge" style="color: white; padding: 4px 12px; border-radius: 999px; font-weight: 700; font-size: 0.9rem;" data-out-of-stock="<%= b.availableCopies === 0 %>">
+                                        <%= b.availableCopies %>
+                                    </span>
+                                </td>
+                                <td style="padding:13px 16px; color:#475569;"><%= b.totalCopies %></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } %>
+    </div>
+</div>
+</body>
+</html>

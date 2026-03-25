@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fines & Due Dates - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/theme.js"></script>
+    <style>
+        .urgency-badge[data-urgency="high"] { background-color: #f59e0b; }
+        .urgency-badge[data-urgency="low"] { background-color: #10b981; }
+        .paid-badge[data-paid="true"] { background-color: #10b981; }
+        .paid-badge[data-paid="false"] { background-color: #f59e0b; }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <%- include('../partials/header') %>
+    <div style="padding:30px;">
+        <h1 style="margin-bottom:5px;"><i class="fas fa-exclamation-triangle" style="color:#ef4444; margin-right:10px;"></i>Fines & Due Dates</h1>
+        <p style="color:#64748b; margin-bottom:28px;">Track your overdue books and pending fines. Fine rate: ₹2 per day after due date.</p>
+
+        <% if(typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+            <div class="alert alert-success"><%= success_msg %></div>
+        <% } %>
+        <% if(typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+            <div class="alert alert-danger"><%= error_msg %></div>
+        <% } %>
+
+        <!-- Overdue Books -->
+        <% if(overdue.length > 0) { %>
+            <div style="background:linear-gradient(135deg,#fef2f2,#fee2e2); border:1px solid #fca5a5; border-radius:16px; padding:20px; margin-bottom:24px;">
+                <h3 style="color:#dc2626; margin:0 0 16px;"><i class="fas fa-exclamation-circle" style="margin-right:8px;"></i>Overdue Books (<%= overdue.length %>)</h3>
+                <% overdue.forEach(b => { %>
+                    <div style="background:white; border-radius:12px; padding:16px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                        <div>
+                            <div style="font-weight:600; color:#1e293b;"><%= b.book ? b.book.title : 'N/A' %></div>
+                            <div style="color:#64748b; font-size:0.85rem;"><%= b.book ? b.book.author : '' %></div>
+                            <div style="color:#dc2626; font-size:0.85rem; margin-top:4px;">
+                                <i class="fas fa-calendar-times" style="margin-right:4px;"></i>Due: <%= b.dueDate ? new Date(b.dueDate).toLocaleDateString() : '—' %>
+                                &nbsp;|&nbsp; <strong><%= b.daysOverdue %> day(s) overdue</strong>
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:1.6rem; font-weight:700; color:#dc2626;">₹<%= b.fineAmount %></div>
+                            <div style="color:#94a3b8; font-size:0.75rem;">Estimated fine</div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } %>
+
+        <!-- Upcoming Due Dates -->
+        <% if(upcoming.length > 0) { %>
+            <div class="glass-card" style="margin-bottom:24px;">
+                <h3 style="color:#1e40af; margin:0 0 16px;"><i class="fas fa-clock" style="margin-right:8px;"></i>Books Due Soon</h3>
+                <% upcoming.forEach(b => { %>
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #e2e8f0;">
+                        <div>
+                            <div style="font-weight:500; color:#1e293b;"><%= b.book ? b.book.title : 'N/A' %></div>
+                            <div style="color:#64748b; font-size:0.83rem;">
+                                Due: <%= b.dueDate ? new Date(b.dueDate).toLocaleDateString() : '—' %>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="urgency-badge" style="color: white; padding: 4px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 600;" data-urgency="<%= b.daysLeft <= 3 ? 'high' : 'low' %>">
+                                <%= b.daysLeft %> day(s) left
+                            </span>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } %>
+
+        <!-- No active borrows -->
+        <% if(overdue.length === 0 && upcoming.length === 0) { %>
+            <div class="glass-card" style="text-align:center; padding:50px 20px; margin-bottom:24px;">
+                <i class="fas fa-check-circle" style="font-size:3rem; color:#10b981; margin-bottom:14px; display:block;"></i>
+                <h3 style="color:#1e293b;">Great! No overdue books</h3>
+                <p style="color:#64748b;">You have no active borrows with upcoming or overdue due dates.</p>
+            </div>
+        <% } %>
+
+        <!-- Fine History -->
+        <% if(fines.length > 0) { %>
+            <div class="glass-card" style="overflow:hidden;">
+                <h3 style="color:#1e293b; margin:0 0 16px;"><i class="fas fa-receipt" style="margin-right:8px; color:#64748b;"></i>Fine History</h3>
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:#f1f5f9;">
+                            <th style="padding:12px 16px; text-align:left; font-size:0.85rem; color:#64748b;">Book</th>
+                            <th style="padding:12px 16px; text-align:left; font-size:0.85rem; color:#64748b;">Days Overdue</th>
+                            <th style="padding:12px 16px; text-align:left; font-size:0.85rem; color:#64748b;">Amount</th>
+                            <th style="padding:12px 16px; text-align:left; font-size:0.85rem; color:#64748b;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% fines.forEach(f => { %>
+                            <tr style="border-bottom:1px solid #e2e8f0;">
+                                <td style="padding:12px 16px; color:#1e293b;"><%= f.borrow && f.borrow.book ? f.borrow.book.title : 'N/A' %></td>
+                                <td style="padding:12px 16px; color:#475569;"><%= f.daysOverdue %> days</td>
+                                <td style="padding:12px 16px; font-weight:600; color:#dc2626;">₹<%= f.amount %></td>
+                                <td style="padding:12px 16px;">
+                                    <span class="paid-badge" style="color: white; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem;" data-paid="<%= f.paid %>">
+                                        <%= f.paid ? 'Paid' : 'Pending' %>
+                                    </span>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } %>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - ARUS Admin</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/js/theme.js"></script>
+</head>
+<body>
+<div class="dashboard-container">
+    <%- include('../partials/header') %>
+    <div style="padding:30px;">
+        <h1 style="margin-bottom:5px;"><i class="fas fa-chart-bar" style="color:#3b82f6;margin-right:10px;"></i>Analytics Dashboard</h1>
+        <p style="color:#64748b; margin-bottom:28px;">Insights and statistics across the portal.</p>
+
+        <!-- Summary Cards -->
+        <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:30px;">
+            <div class="glass-card" style="flex:1; min-width:160px; padding:20px; text-align:center;">
+                <div style="font-size:2rem; font-weight:700; color:#3b82f6;"><%= totalBorrows %></div>
+                <div style="color:#64748b; font-size:0.85rem; margin-top:4px;">Total Borrows</div>
+            </div>
+            <div class="glass-card" style="flex:1; min-width:160px; padding:20px; text-align:center;">
+                <div style="font-size:2rem; font-weight:700; color:#10b981;"><%= activeBorrows %></div>
+                <div style="color:#64748b; font-size:0.85rem; margin-top:4px;">Currently Borrowed</div>
+            </div>
+            <div class="glass-card" style="flex:1; min-width:160px; padding:20px; text-align:center;">
+                <div style="font-size:2rem; font-weight:700; color:#ef4444;"><%= overdueBorrows %></div>
+                <div style="color:#64748b; font-size:0.85rem; margin-top:4px;">Overdue Returns</div>
+            </div>
+            <div class="glass-card" style="flex:1; min-width:160px; padding:20px; text-align:center;">
+                <div style="font-size:2rem; font-weight:700; color:#f59e0b;"><%= statusBreakdown.pending %></div>
+                <div style="color:#64748b; font-size:0.85rem; margin-top:4px;">Pending Bookings</div>
+            </div>
+            <div class="glass-card" style="flex:1; min-width:160px; padding:20px; text-align:center;">
+                <div style="font-size:2rem; font-weight:700; color:#10b981;"><%= statusBreakdown.approved %></div>
+                <div style="color:#64748b; font-size:0.85rem; margin-top:4px;">Approved Bookings</div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:28px;">
+            <!-- Top Books Bar Chart -->
+            <div class="glass-card" style="padding:20px;">
+                <h3 style="margin:0 0 16px; color:#1e293b; font-size:1rem;"><i class="fas fa-book" style="color:#3b82f6; margin-right:8px;"></i>Most Borrowed Books</h3>
+                <canvas id="topBooksChart" height="280"></canvas>
+            </div>
+            <!-- Peak Hours Line Chart -->
+            <div class="glass-card" style="padding:20px;">
+                <h3 style="margin:0 0 16px; color:#1e293b; font-size:1rem;"><i class="fas fa-clock" style="color:#f59e0b; margin-right:8px;"></i>Peak Booking Hours</h3>
+                <canvas id="peakHoursChart" height="280"></canvas>
+            </div>
+        </div>
+
+        <!-- Booking Status Doughnut & Active Students Table -->
+        <div style="display:grid; grid-template-columns:1fr 2fr; gap:24px;">
+            <div class="glass-card" style="padding:20px;">
+                <h3 style="margin:0 0 16px; color:#1e293b; font-size:1rem;"><i class="fas fa-pie-chart" style="color:#8b5cf6; margin-right:8px;"></i>Booking Status</h3>
+                <canvas id="statusChart" height="250"></canvas>
+            </div>
+            <div class="glass-card" style="padding:20px; overflow:hidden;">
+                <h3 style="margin:0 0 16px; color:#1e293b; font-size:1rem;"><i class="fas fa-user-graduate" style="color:#10b981; margin-right:8px;"></i>Most Active Students</h3>
+                <% if(activeStudents.length === 0) { %>
+                    <p style="color:#94a3b8; text-align:center; padding:20px 0;">No booking data yet.</p>
+                <% } else { %>
+                    <table style="width:100%; border-collapse:collapse;">
+                        <thead>
+                            <tr style="background:#f1f5f9;">
+                                <th style="padding:10px 14px; text-align:left; font-size:0.82rem; color:#64748b;">#</th>
+                                <th style="padding:10px 14px; text-align:left; font-size:0.82rem; color:#64748b;">Student</th>
+                                <th style="padding:10px 14px; text-align:left; font-size:0.82rem; color:#64748b;">Email</th>
+                                <th style="padding:10px 14px; text-align:left; font-size:0.82rem; color:#64748b;">Bookings</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% activeStudents.forEach((s, i) => { %>
+                                <tr style="border-bottom:1px solid #e2e8f0;">
+                                    <td style="padding:10px 14px; color:#94a3b8; font-weight:600;"><%= i+1 %></td>
+                                    <td style="padding:10px 14px; font-weight:500; color:#1e293b;"><%= s.name %></td>
+                                    <td style="padding:10px 14px; color:#64748b; font-size:0.85rem;"><%= s.email %></td>
+                                    <td style="padding:10px 14px;">
+                                        <span style="background:#eff6ff; color:#1e40af; padding:3px 10px; border-radius:999px; font-weight:600; font-size:0.82rem;"><%= s.bookings %></span>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                <% } %>
+            </div>
+        </div>
+        <!-- Hidden data for JavaScript -->
+        <div id="analytics-data" style="display:none;" 
+            data-top-books='<%- topBooks %>' 
+            data-peak-hours='<%- peakHours %>'
+            data-status-pending="<%= statusBreakdown.pending %>"
+            data-status-approved="<%= statusBreakdown.approved %>"
+            data-status-cancelled="<%= statusBreakdown.cancelled %>">
+        </div>
+    </div>
+</div>
+
+<script>
+    const dataEl = document.getElementById('analytics-data');
+    const topBooksData = JSON.parse(dataEl.dataset.topBooks || '[]');
+    const peakHoursData = JSON.parse(dataEl.dataset.peakHours || '[]');
+    const statusData = [
+        parseInt(dataEl.dataset.statusPending) || 0,
+        parseInt(dataEl.dataset.statusApproved) || 0,
+        parseInt(dataEl.dataset.statusCancelled) || 0
+    ];
+
+    // Top Books Chart
+    new Chart(document.getElementById('topBooksChart'), {
+        type: 'bar',
+        data: {
+            labels: topBooksData.map(b => b.title.length > 20 ? b.title.substring(0,20)+'…' : b.title),
+            datasets: [{
+                label: 'Borrows',
+                data: topBooksData.map(b => b.count),
+                backgroundColor: 'rgba(59,130,246,0.75)',
+                borderColor: '#1d4ed8',
+                borderWidth: 1.5,
+                borderRadius: 6
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+
+    // Peak Hours Chart (filter to show only hours 6-22)
+    const dayHours = peakHoursData.filter(h => parseInt(h.hour) >= 6 && parseInt(h.hour) <= 22);
+    new Chart(document.getElementById('peakHoursChart'), {
+        type: 'line',
+        data: {
+            labels: dayHours.map(h => h.hour),
+            datasets: [{
+                label: 'Bookings',
+                data: dayHours.map(h => h.count),
+                fill: true,
+                backgroundColor: 'rgba(245,158,11,0.12)',
+                borderColor: '#f59e0b',
+                borderWidth: 2.5,
+                tension: 0.4,
+                pointBackgroundColor: '#f59e0b',
+                pointRadius: 4
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+
+    // Status Doughnut
+    new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Pending', 'Approved', 'Cancelled'],
+            datasets: [{
+                data: statusData,
+                backgroundColor: ['#f59e0b','#10b981','#ef4444'],
+                borderWidth: 2
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
+    });
+</script>
+</body>
+</html>

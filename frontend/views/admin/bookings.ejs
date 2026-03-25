@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Bookings - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/theme.js"></script>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <%- include('../partials/header') %>
+
+            <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center;">
+                <h1>Manage Bookings</h1>
+            </div>
+
+            <%- include('../partials/messages') %>
+
+                <!-- Filters -->
+                <div class="filters"
+                    style="margin-bottom: 20px; display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                    <div class="form-group" style="margin-bottom: 0; flex: 1; max-width: 200px;">
+                        <label for="filterDate">Date:</label>
+                        <input type="date" id="filterDate" class="form-control">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0; flex: 1; max-width: 200px;">
+                        <label for="filterStatus">Status:</label>
+                        <select id="filterStatus" class="form-control">
+                            <option value="all">All</option>
+                            <option value="approved">Approved</option>
+                            <option value="pending">Pending</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-secondary" onclick="resetFilters()"
+                        style="margin-bottom: 1px;">Reset</button>
+                </div>
+
+                <div class="table-container glass-card">
+                    <table style="width: 100%; border-collapse: collapse;" id="bookingTable">
+                        <thead>
+                            <tr>
+                                <th>Resource</th>
+                                <th>User</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if(bookings.length> 0) { %>
+                                <% bookings.forEach(function(booking) { %>
+                                    <tr class="booking-row"
+                                        data-date-iso="<%= booking.date.toISOString().split('T')[0] %>"
+                                        data-status="<%= booking.status %>">
+                                        <td>
+                                            <%= booking.resource ? booking.resource.name : 'Unknown' %>
+                                        </td>
+                                        <td>
+                                            <%= booking.user ? booking.user.name : 'Deleted User' %>
+                                                <% if(booking.bookedBy && booking.user &&
+                                                    booking.bookedBy._id.toString() !==booking.user._id.toString()) { %>
+                                                    <br><small>(By: <%= booking.bookedBy.name %>)</small>
+                                                    <% } %>
+                                        </td>
+                                        <td>
+                                            <%= booking.date.toDateString() %>
+                                        </td>
+                                        <td>
+                                            <%= booking.startTime %> - <%= booking.endTime %>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-<%= booking.status %>">
+                                                <%= booking.status %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <% if(booking.status==='pending' ) { %>
+                                                <form action="/bookings/<%= booking._id %>/approve" method="POST"
+                                                    style="display:inline;">
+                                                    <button type="submit"
+                                                        class="btn btn-sm btn-success">Approve</button>
+                                                </form>
+                                                <% } %>
+                                                    <% if(booking.status !=='cancelled' ) { %>
+                                                        <form action="/bookings/<%= booking._id %>/cancel" method="POST"
+                                                            style="display:inline;">
+                                                            <button type="submit"
+                                                                class="btn btn-sm btn-danger">Cancel</button>
+                                                        </form>
+                                                        <% } %>
+                                        </td>
+                                    </tr>
+                                    <% }); %>
+                                        <% } else { %>
+                                            <tr>
+                                                <td colspan="6">No bookings found</td>
+                                            </tr>
+                                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dateInput = document.getElementById('filterDate');
+            const statusSelect = document.getElementById('filterStatus');
+
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+
+            // Event listeners
+            dateInput.addEventListener('change', filterBookings);
+            statusSelect.addEventListener('change', filterBookings);
+
+            // Initial filter
+            filterBookings();
+        });
+
+        function filterBookings() {
+            const selectedDate = document.getElementById('filterDate').value;
+            const selectedStatus = document.getElementById('filterStatus').value;
+            const rows = document.querySelectorAll('.booking-row');
+
+            rows.forEach(row => {
+                const rowDate = row.getAttribute('data-date-iso');
+                const rowStatus = row.getAttribute('data-status');
+
+                let showRow = true;
+
+                // Date filter
+                if (selectedDate && rowDate !== selectedDate) {
+                    showRow = false;
+                }
+
+                // Status filter
+                if (selectedStatus !== 'all' && rowStatus !== selectedStatus) {
+                    showRow = false;
+                }
+
+                row.style.display = showRow ? '' : 'none';
+            });
+        }
+
+        function resetFilters() {
+            const dateInput = document.getElementById('filterDate');
+            const statusSelect = document.getElementById('filterStatus');
+
+            // Reset to today
+            dateInput.value = new Date().toISOString().split('T')[0];
+            statusSelect.value = 'all';
+
+            filterBookings();
+        }
+    </script>
+
+    <style>
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+        }
+
+        .badge-pending {
+            background: #f1c40f;
+            color: #000;
+        }
+
+        .badge-approved {
+            background: #2ecc71;
+            color: #fff;
+        }
+
+        .badge-cancelled {
+            background: #e74c3c;
+            color: #fff;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.8em;
+        }
+
+        .btn-success {
+            background-color: #2ecc71;
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+    </style>
+</body>
+
+</html>

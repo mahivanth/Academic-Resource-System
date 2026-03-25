@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Announcements - ARUS Admin</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/theme.js"></script>
+    <style>
+        .announcement-card { border-left-width: 4px; border-left-style: solid; transition: border-color 0.3s; }
+        .announcement-card[data-active="true"] { border-left-color: #3b82f6; }
+        .announcement-card[data-active="false"] { border-left-color: #94a3b8; }
+        .btn-toggle[data-active="true"] { background: #f59e0b; }
+        .btn-toggle[data-active="false"] { background: #10b981; }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <%- include('../partials/header') %>
+    <div style="padding:30px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:28px;">
+            <div>
+                <h1 style="margin-bottom:4px;"><i class="fas fa-bullhorn" style="color:#f59e0b; margin-right:10px;"></i>Announcements</h1>
+                <p style="color:#64748b; margin:0;">Post notices visible to students, faculty, or all users.</p>
+            </div>
+        </div>
+
+        <% if(typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+            <div class="alert alert-success"><%= success_msg %></div>
+        <% } %>
+        <% if(typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+            <div class="alert alert-danger"><%= error_msg %></div>
+        <% } %>
+
+        <!-- Create New Announcement -->
+        <div class="glass-card" style="padding:24px; margin-bottom:28px;">
+            <h3 style="margin:0 0 18px; color:#1e293b; font-size:1rem;"><i class="fas fa-plus-circle" style="color:#3b82f6; margin-right:8px;"></i>Post New Announcement</h3>
+            <form action="/admin/announcements/create" method="POST">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:14px;">
+                    <div>
+                        <label style="display:block; font-weight:500; color:#475569; margin-bottom:6px;">Title *</label>
+                        <input type="text" name="title" placeholder="Announcement title" class="form-control" required style="width:100%; padding:10px 14px; border:1px solid #e2e8f0; border-radius:10px; font-size:0.9rem; background:#f8fafc;">
+                    </div>
+                    <div>
+                        <label style="display:block; font-weight:500; color:#475569; margin-bottom:6px;">Audience</label>
+                        <div style="display:flex; gap:12px; align-items:center; padding-top:8px; flex-wrap:wrap;">
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; color:#475569;">
+                                <input type="checkbox" name="targetRoles" value="all" checked> All Users
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; color:#475569;">
+                                <input type="checkbox" name="targetRoles" value="student"> Students
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; color:#475569;">
+                                <input type="checkbox" name="targetRoles" value="faculty"> Faculty
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block; font-weight:500; color:#475569; margin-bottom:6px;">Content *</label>
+                    <textarea name="content" rows="4" placeholder="Write the announcement content here..." required
+                        style="width:100%; padding:10px 14px; border:1px solid #e2e8f0; border-radius:10px; font-size:0.9rem; background:#f8fafc; resize:vertical;"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="padding:10px 24px;">
+                    <i class="fas fa-paper-plane" style="margin-right:8px;"></i>Post Announcement
+                </button>
+            </form>
+        </div>
+
+        <!-- Existing Announcements -->
+        <% if(announcements.length === 0) { %>
+            <div class="glass-card" style="text-align:center; padding:50px 20px;">
+                <i class="fas fa-bullhorn" style="font-size:3rem; color:#cbd5e1; margin-bottom:16px; display:block;"></i>
+                <p style="color:#94a3b8;">No announcements posted yet.</p>
+            </div>
+        <% } else { %>
+            <% announcements.forEach(ann => { %>
+                <div class="glass-card announcement-card" style="padding: 20px; margin-bottom: 16px;" data-active="<%= ann.isActive %>">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                        <div>
+                            <h3 style="margin:0; color:#1e293b; font-size:1.05rem;"><%= ann.title %></h3>
+                            <div style="color:#94a3b8; font-size:0.8rem; margin-top:4px;">
+                                By <%= ann.createdBy ? ann.createdBy.name : 'Admin' %> &middot;
+                                <%= new Date(ann.createdAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) %>
+                                &middot;
+                                <% ann.targetRoles.forEach(r => { %>
+                                    <span style="background:#eff6ff; color:#1e40af; padding:1px 7px; border-radius:999px; font-size:0.75rem; margin-right:3px;"><%= r %></span>
+                                <% }) %>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:8px; flex-shrink:0;">
+                            <form action="/admin/announcements/<%= ann._id %>/toggle" method="POST" style="margin:0;">
+                                <button type="submit" class="btn-toggle" style="color: white; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.8rem;" data-active="<%= ann.isActive %>">
+                                    <i class="fas fa-<%= ann.isActive ? 'pause' : 'play' %>"></i> <%= ann.isActive ? 'Deactivate' : 'Activate' %>
+                                </button>
+                            </form>
+                            <form action="/admin/announcements/<%= ann._id %>/delete" method="POST" style="margin:0;" onsubmit="return confirm('Delete this announcement?')">
+                                <button type="submit" style="background:#ef4444; color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <p style="color:#475569; margin:0; line-height:1.6; font-size:0.92rem;"><%= ann.content %></p>
+                    <% if(!ann.isActive) { %>
+                        <div style="margin-top:8px; font-size:0.78rem; color:#94a3b8;"><i class="fas fa-eye-slash" style="margin-right:4px;"></i>Currently hidden from users</div>
+                    <% } %>
+                </div>
+            <% }) %>
+        <% } %>
+    </div>
+</div>
+</body>
+</html>

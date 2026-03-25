@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add/Edit Resource - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script>
+        function toggleTypeFields() {
+            const type = document.getElementById('type').value;
+            const resourceFields = document.getElementById('resourceFields');
+            if (type === 'resource') {
+                resourceFields.style.display = 'block';
+            } else {
+                resourceFields.style.display = 'none';
+            }
+        }
+    </script>
+    <script src="/js/theme.js"></script>
+</head>
+
+<body>
+
+    <div class="dashboard-container">
+        <%- include('../partials/header') %>
+
+            <div class="glass-card" style="margin: 0 auto; max-width: 800px;">
+                <h2>
+                    <%= resource ? 'Edit' : 'Create' %> Resource
+                </h2>
+
+                <form action="/admin/resources/<%= resource ? resource._id + '/edit' : 'create' %>" method="POST">
+                    <input type="hidden" name="parentId" value="<%= parentId %>">
+
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" name="name" value="<%= resource ? resource.name : '' %>" required>
+                    </div>
+
+                    <% if(!resource) { %>
+                        <div class="form-group">
+                            <label>Type</label>
+                            <select id="type" name="type" onchange="toggleTypeFields()"
+                                style="width: 100%; padding: 10px; border-radius: 5px;">
+                                <option value="folder">Folder</option>
+                                <option value="resource">Resource (Lab/Classroom)</option>
+                            </select>
+                        </div>
+                        <% } %>
+
+                            <div id="resourceFields" style="display: none;">
+                                <div class="form-group">
+                                    <label>Capacity (No. of Slots/Seats)</label>
+                                    <input type="number" name="capacity"
+                                        value="<%= resource ? resource.capacity : '' %>">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Resource Type</label>
+                                    <select name="resourceType" style="width: 100%; padding: 10px; border-radius: 5px;">
+                                        <% const types=['Lab', 'Classroom' , 'Seminar Hall' , 'Auditorium' , 'Other' ];
+                                            %>
+                                            <% types.forEach(type=> { %>
+                                                <option value="<%= type %>" <%=(resource &&
+                                                    resource.resourceType===type) ? 'selected' : '' %>><%= type %>
+                                                </option>
+                                                <% }); %>
+                                    </select>
+                                </div>
+
+                                <% if(resource) { %>
+                                    <div class="form-group">
+                                        <label>Manage Slots</label>
+                                        <div style="margin-top: 5px;">
+                                            <a href="/resources/<%= resource._id %>/manage-slots"
+                                                class="btn btn-outline" style="text-decoration: none;">
+                                                <i class="fas fa-calendar-check"></i> Configure Slot Timings
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <% } %>
+                            </div>
+
+                            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                                <button type="submit" class="btn btn-primary">
+                                    <%= resource ? 'Update' : 'Create' %>
+                                </button>
+                                <a href="/admin/resources?parentId=<%= parentId || '' %>"
+                                    class="btn btn-secondary">Cancel</a>
+                            </div>
+                </form>
+            </div>
+    </div>
+
+    <% if(resource && resource.type==='resource' ) { %>
+        <script>document.getElementById('resourceFields').style.display = 'block';</script>
+        <% } %>
+</body>
+
+</html>

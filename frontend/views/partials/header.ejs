@@ -1,0 +1,152 @@
+<head>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Font Awesome Icons (global) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<aside class="sidebar">
+    <div class="logo">
+        <h2>ARUS PORTAL</h2>
+    </div>
+    <div class="nav-links">
+        <% const _isLibrarian = user.role === 'faculty' && user.facultyType === 'non-teaching' && user.department && user.department.toLowerCase().includes('librar'); %>
+        <% if(!_isLibrarian) { %>
+        <span class="section-title">Main</span>
+        <a href="/dashboard"><i class="fas fa-home"></i> Dashboard</a>
+        <% if(user.role !== 'admin') { %>
+            <a href="/announcements">
+                <i class="fas fa-bullhorn"></i> Announcements
+                <% if(typeof unreadAnnouncementsCount !== 'undefined' && unreadAnnouncementsCount > 0) { %>
+                    <span class="badge" style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 50%; font-size: 0.7rem; margin-left: 5px;"><%= unreadAnnouncementsCount %></span>
+                <% } %>
+            </a>
+        <% } %>
+        <% } %>
+
+        <% if(user.role==='admin') { %>
+            <span class="section-title">Users</span>
+            <a href="/admin/students"><i class="fas fa-user-graduate"></i> Manage Students</a>
+            <a href="/admin/faculty"><i class="fas fa-chalkboard-teacher"></i> Manage Faculty</a>
+            
+            <span class="section-title">Facilities</span>
+            <a href="/admin/resources"><i class="fas fa-building"></i> Manage Resources</a>
+            <a href="/admin/slot-timings"><i class="fas fa-clock"></i> Slot Timings</a>
+            <a href="/library"><i class="fas fa-book-open"></i> Library</a>
+            <a href="/library/manage"><i class="fas fa-book"></i> Manage Library</a>
+
+            <span class="section-title">Insights</span>
+            <a href="/admin/analytics"><i class="fas fa-chart-bar"></i> Analytics</a>
+            <a href="/admin/announcements">
+                <i class="fas fa-bullhorn"></i> Announcements
+                <% if(typeof unreadAnnouncementsCount !== 'undefined' && unreadAnnouncementsCount > 0) { %>
+                    <span class="badge" style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 50%; font-size: 0.7rem; margin-left: 5px;"><%= unreadAnnouncementsCount %></span>
+                <% } %>
+            </a>
+        <% } else if(user.role==='faculty') { %>
+            <% const isLibrarian = user.facultyType === 'non-teaching' && user.department && user.department.toLowerCase().includes('librar'); %>
+            <% if(isLibrarian) { %>
+                <!-- Librarian portal: library only -->
+                <span class="section-title">Library</span>
+                <a href="/library"><i class="fas fa-book-open"></i> Book Catalog</a>
+                <a href="/library/manage"><i class="fas fa-book"></i> Manage Books</a>
+                <a href="/library/borrows"><i class="fas fa-clipboard-list"></i> Borrow Requests</a>
+                <a href="/library/reservations"><i class="fas fa-bookmark"></i> Reservations</a>
+                <a href="/library/low-stock"><i class="fas fa-exclamation-triangle"></i> Low Stock Alert</a>
+            <% } else { %>
+                <!-- Regular faculty -->
+                <span class="section-title">Academics</span>
+                <a href="/faculty/resources"><i class="fas fa-cube"></i> Assigned Resources</a>
+                <a href="/faculty/requests"><i class="fas fa-file-alt"></i> Requests</a>
+                <a href="/faculty/slot-notes"><i class="fas fa-sticky-note"></i> Slot Notes</a>
+                <a href="/library"><i class="fas fa-book-open"></i> Library</a>
+            <% } %>
+        <% } else if(user.role==='student') { %>
+            <span class="section-title">Academics</span>
+            <a href="/library"><i class="fas fa-book-open"></i> Library</a>
+            <a href="/student/borrow-history"><i class="fas fa-book-reader"></i> Borrow History</a>
+            <a href="/student/booking-history"><i class="fas fa-calendar-alt"></i> Booking History</a>
+            <a href="/student/fines"><i class="fas fa-exclamation-circle"></i> Fines & Due Dates</a>
+        <% } %>
+        
+    </div>
+
+    <div class="sidebar-footer">
+        <style>
+        .notification-dropdown {
+            display: none;
+            position: absolute;
+            bottom: 60px; /* Appear above the footer */
+            left: 20px;
+            width: 280px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            z-index: 1000;
+            text-align: left;
+            overflow: hidden;
+        }
+        .notification-dropdown-trigger:hover .notification-dropdown,
+        .notification-dropdown-trigger:focus-within .notification-dropdown {
+            display: block;
+        }
+        .dropdown-header {
+            padding: 12px 15px;
+            background: #f8fafc;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #3b82f6;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .dropdown-footer {
+            padding: 10px 15px;
+            background: #f8fafc;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #3b82f6;
+            cursor: pointer;
+            border-top: 1px solid #e2e8f0;
+        }
+        .dropdown-body {
+            max-height: 250px;
+            overflow-y: auto;
+            background: #fff;
+        }
+        .dropdown-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.85rem;
+            color: #334155;
+            line-height: 1.4;
+        }
+        .dropdown-item:hover {
+            background: #f1f5f9;
+        }
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.65rem;
+            font-weight: bold;
+        }
+        </style>
+
+        <div style="display: flex; gap: 12px; justify-content: center; width: 100%; align-items: center;">
+            <div class="profile-icon" onclick="window.location.href='/profile'" title="Profile">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="profile-icon" onclick="window.location.href='/users/logout'" title="Logout">
+                <i class="fas fa-sign-out-alt" style="transform: translateX(2px);"></i>
+            </div>
+        </div>
+    </div>
+</aside>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= faculty ? 'Edit Faculty' : 'Add Faculty' %> - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/theme.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <%- include('../partials/header') %>
+        <div class="content" style="max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <%- include('../partials/messages') %>
+            <h1><%= faculty ? 'Edit Faculty' : 'Add Faculty' %></h1>
+            <form action="/admin/faculty/<%= faculty ? faculty._id + '/edit' : 'create' %>" method="POST">
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" class="form-control" value="<%= faculty ? faculty.name : '' %>" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" class="form-control" value="<%= faculty ? faculty.email : '' %>" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="password"><%= faculty ? 'Password (leave blank to keep current)' : 'Password' %></label>
+                    <input type="password" id="password" name="password" class="form-control" <%= faculty ? '' : 'required' %> style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="facultyId">Faculty ID</label>
+                    <input type="text" id="facultyId" name="facultyId" class="form-control" value="<%= faculty ? faculty.facultyId : '' %>" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="facultyType">Faculty Type</label>
+                    <select id="facultyType" name="facultyType" class="form-control" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="">Select Faculty Type</option>
+                        <option value="teaching" <%= faculty && faculty.facultyType === 'teaching' ? 'selected' : '' %>>Teaching Faculty</option>
+                        <option value="non-teaching" <%= faculty && faculty.facultyType === 'non-teaching' ? 'selected' : '' %>>Non-Teaching Faculty</option>
+                        <option value="intern" <%= faculty && faculty.facultyType === 'intern' ? 'selected' : '' %>>Intern</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="department" id="deptLabel">Department / Role</label>
+                    <input type="text" id="department" name="department" class="form-control" value="<%= faculty ? (faculty.department || '') : '' %>" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;"><%= faculty ? 'Update Faculty' : 'Create Faculty' %></button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const typeSelect = document.getElementById('facultyType');
+            const deptLabel = document.getElementById('deptLabel');
+            const deptInput = document.getElementById('department');
+            const deptGroup = deptInput.closest('.form-group');
+
+            function updateLabel() {
+                if (typeSelect.value === 'intern') {
+                    deptGroup.style.display = 'none';
+                    deptInput.value = '';
+                } else {
+                    deptGroup.style.display = 'block';
+                    if (typeSelect.value === 'teaching') {
+                        deptLabel.innerText = 'Department';
+                        deptInput.placeholder = 'e.g., Computer Science';
+                    } else if (typeSelect.value === 'non-teaching') {
+                        deptLabel.innerText = 'Role / Designation';
+                        deptInput.placeholder = 'e.g., Technician, Librarian';
+                    } else {
+                        deptLabel.innerText = 'Department / Role';
+                        deptInput.placeholder = '';
+                    }
+                }
+            }
+
+            typeSelect.addEventListener('change', updateLabel);
+            updateLabel(); // Initial run on edit pages
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Slots - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/theme.js"></script>
+</head>
+
+<body>
+
+    <div class="dashboard-container">
+        <%- include('../partials/header') %>
+
+            <div class="glass-card" style="margin: 0 auto; max-width: 800px;">
+                <h2>Manage Slots for <%= resource.name %>
+                </h2>
+                <a href="/admin/slot-timings" style="margin-bottom: 10px; display: inline-block;"><i
+                        class="fas fa-clock"></i> Manage Slot Timings</a>
+
+                <p style="margin-bottom: 15px; color: #666;">
+                    Assign slot timings to this resource. Create slot timings in <a href="/admin/slot-timings">Slot
+                        Timings</a> first if needed.
+                </p>
+                <div class="mb-4">
+                    <form action="/resources/<%= resource._id %>/slots" method="POST">
+                        <input type="hidden" name="resourceId" value="<%= resource._id %>">
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <label>Select Slot Timing</label>
+                            <select name="slotTimingId" required
+                                style="width: 100%; padding: 10px; border-radius: 5px;">
+                                <option value="">-- Choose a Slot Timing --</option>
+                                <% if (typeof slotTimings !=='undefined' && slotTimings.length> 0) { %>
+                                    <% slotTimings.forEach(function(st) { %>
+                                        <option value="<%= st._id %>">
+                                            <%= st.label ? st.label + ' - ' : '' %>
+                                                <%= st.startTime %> - <%= st.endTime %>
+                                        </option>
+                                        <% }); %>
+                                            <% } else { %>
+                                                <option value="" disabled>No slot timings defined. Create one first.
+                                                </option>
+                                                <% } %>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" name="autoApprove"
+                                    style="width: auto; height: 16px; margin: 0; cursor: pointer;">
+                                Auto Approve Bookings
+                            </label>
+                        </div>
+                        <div class="form-group" style="width: 100%;">
+                            <label>Assign Faculty</label>
+                            <input type="text" id="facultySearch" placeholder="Search faculty by name or ID..." style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 5px; margin-bottom: 8px; box-sizing: border-box;">
+                            
+                            <div id="facultyListContainer" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 5px; padding: 10px; background: var(--bg-color);">
+                                <p id="facultySearchPrompt" style="text-align: center; color: var(--text-muted); font-size: 0.9em; margin: 10px 0;">Start typing to search for faculty...</p>
+                                
+                                <% faculties.forEach(function(faculty) { %>
+                                    <label class="faculty-item" style="display: none; align-items: center; gap: 10px; padding: 6px 0; cursor: pointer; border-bottom: 1px solid #f1f5f9;">
+                                        <input type="checkbox" name="assignedFaculty" value="<%= faculty._id %>" style="width: auto; height: 16px; margin: 0; cursor: pointer;">
+                                        <span class="faculty-text" style="color: var(--text-color); font-weight: 500;"><%= faculty.name %> <span style="color: var(--text-muted); font-size: 0.9em;">(<%= faculty.facultyId %>)</span></span>
+                                    </label>
+                                <% }); %>
+                                <% if(faculties.length === 0) { %>
+                                    <p style="text-align: center; color: var(--text-muted); font-size: 0.9em; margin: 0;">No faculty available.</p>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <script>
+                            document.getElementById('facultySearch')?.addEventListener('input', function(e) {
+                                const searchTerm = e.target.value.toLowerCase().trim();
+                                const items = document.querySelectorAll('.faculty-item');
+                                const prompt = document.getElementById('facultySearchPrompt');
+                                let hasMatch = false;
+
+                                if (searchTerm.length === 0) {
+                                    if (prompt) prompt.style.display = 'block';
+                                    items.forEach(item => item.style.display = 'none');
+                                    return;
+                                }
+                                
+                                if (prompt) prompt.style.display = 'none';
+
+                                items.forEach(item => {
+                                    const text = item.querySelector('.faculty-text').textContent.toLowerCase();
+                                    
+                                    // Always show if it's already checked so they don't lose track of it
+                                    const isChecked = item.querySelector('input[type="checkbox"]').checked;
+
+                                    if (text.includes(searchTerm) || isChecked) {
+                                        item.style.display = 'flex';
+                                        hasMatch = true;
+                                    } else {
+                                        item.style.display = 'none';
+                                    }
+                                });
+                            });
+                        </script>
+                        <button type="submit" class="btn btn-primary"
+                            style="margin-bottom: 15px; margin-top: 10px;">Assign Slot Timing</button>
+                    </form>
+                </div>
+
+                <hr>
+
+                <script>
+                    function formatTime(timeString) {
+                        const [hourString, minute] = timeString.split(":");
+                        const hour = +hourString % 24;
+                        return (hour % 12 || 12) + ":" + minute + (hour < 12 ? " AM" : " PM");
+                    }
+                </script>
+
+                <h3>Existing Slots</h3>
+                <% if (resource.slotTimings && resource.slotTimings.length> 0) { %>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Start Time</th>
+                                    <th>End Time</th>
+                                    <th>Auto Approve</th>
+                                    <th>Assigned Faculty</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% resource.slotTimings.forEach((slot, index)=> {
+                                    const st = slot.slotTiming && typeof slot.slotTiming === 'object'
+                                    ? slot.slotTiming : null;
+                                    const startT = st ? st.startTime : slot.startTime;
+                                    const endT = st ? st.endTime : slot.endTime;
+                                    %>
+                                    <tr>
+                                        <td>
+                                            <script>document.write(formatTime("<%= startT || '' %>"));</script>
+                                        </td>
+                                        <td>
+                                            <script>document.write(formatTime("<%= endT || '' %>"));</script>
+                                        </td>
+                                        <td>
+                                            <%= slot.autoApprove ? 'Yes' : 'No' %>
+                                        </td>
+                                        <td>
+                                            <% if(slot.assignedFaculty && slot.assignedFaculty.length> 0) {
+                                                slot.assignedFaculty.forEach(function(facId) {
+                                                const fac = faculties.find(f => f._id.toString() === facId.toString());
+                                                if(fac) { %>
+                                                <span class="badge"
+                                                    style="background: #6c5ce7; color: white; margin-right: 5px;">
+                                                    <%= fac.name %>
+                                                </span>
+                                                <% } }); } else { %>
+                                                    -
+                                                    <% } %>
+                                        </td>
+                                        <td>
+                                            <form
+                                                action="/resources/<%= resource._id %>/slots/<%= index %>/delete?_method=DELETE"
+                                                method="POST" style="display:inline;">
+                                                <button type="submit" class="btn btn-danger btn-sm"
+                                                    onclick="return confirm('Are you sure?')">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                    <% } else { %>
+                        <p>No slots defined yet.</p>
+                        <% } %>
+
+                            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                                <a href="/admin/resources/<%= resource._id %>/edit"
+                                    class="btn btn-primary">Back to Edit Resource</a>
+                                <a href="/admin/resources?parentId=<%= resource.parent || '' %>"
+                                    class="btn btn-secondary">Back to Resources</a>
+                            </div>
+            </div>
+    </div>
+</body>
+
+</html>

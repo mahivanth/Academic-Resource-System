@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start Booking - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/theme.js"></script>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <%- include('../partials/header') %>
+
+            <div class="header-actions"
+                style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+                <h1>
+                    <% if(parent) { %>
+                        <a href="/resources?parentId=<%= parent.parent %>"><i class="fas fa-arrow-left"></i></a>
+                        <%= parent.name %>
+                            <% } else { %>
+                                Resources
+                                <% } %>
+                </h1>
+
+                <% if(user.role !=='admin' ) { %>
+                    <form action="/resources" method="GET"
+                        style="flex: 1; max-width: 400px; display: flex; gap: 10px; margin-left: auto;">
+                        <input type="text" name="search" placeholder="Search resources..."
+                            value="<%= typeof searchQuery !== 'undefined' ? searchQuery : '' %>"
+                            style="padding: 10px; border-radius: 20px; border: none; width: 100%;">
+                        <button type="submit" class="btn btn-primary" style="border-radius: 20px;"><i
+                                class="fas fa-search"></i></button>
+                        <% if(typeof searchQuery !=='undefined' && searchQuery) { %>
+                            <a href="/resources" class="btn btn-secondary"
+                                style="border-radius: 20px; display: flex; align-items: center;">Clear</a>
+                            <% } %>
+                    </form>
+                    <% } %>
+            </div>
+
+            <%- include('../partials/messages') %>
+
+                <div class="grid-container">
+                    <% if(resources.length> 0) { %>
+                        <% resources.forEach(function(resource) { %>
+                            <a href="<%= resource.type==='folder' ? '/resources?parentId='+resource._id : '/resources/'+resource._id %>"
+                                class="glass-card resource-card"
+                                style="text-decoration: none; color: inherit; display: block;">
+                                <div class="icon" style="font-size: 3rem; text-align: center; margin-bottom: 10px;">
+                                    <% if(resource.type==='folder' ) { %>
+                                        <i class="fas fa-folder" style="color: #ffd700;"></i>
+                                        <% } else { %>
+                                            <i class="fas fa-flask" style="color: #00cec9;"></i>
+                                            <% } %>
+                                </div>
+                                <h3 style="text-align: center;">
+                                    <%= resource.name %>
+                                </h3>
+                            </a>
+                            <% }); %>
+                                <% } else { %>
+                                    <p>No resources found.</p>
+                                    <% } %>
+                </div>
+    </div>
+</body>
+
+</html>

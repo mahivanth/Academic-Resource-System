@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Faculty - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Hide the faculty search input if the folder is collapsed */
+        details.ftype-group:not([open]) .faculty-search-input {
+            display: none;
+        }
+    </style>
+    <script src="/js/theme.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <%- include('../partials/header') %>
+        <div class="content" style="max-width: 1000px; margin: 0 auto; width: 100%;">
+            <%- include('../partials/messages') %>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap:wrap; gap:10px;">
+                <h1>Manage Faculty</h1>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <a href="/admin/faculty/create" class="btn btn-primary" style="display: inline-flex; align-items: center; height: 38px;"><i class="fas fa-plus" style="margin-right: 8px;"></i> Add Faculty</a>
+                    <button onclick="document.getElementById('bulkImportForm').style.display = document.getElementById('bulkImportForm').style.display==='none' ? 'block' : 'none'" class="btn btn-secondary" style="background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; display: inline-flex; align-items: center; height: 38px;">
+                        <i class="fas fa-file-csv" style="margin-right: 8px;"></i> Bulk Import CSV
+                    </button>
+                </div>
+            </div>
+
+            <div id="bulkImportForm" style="display:none; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:20px;">
+                <h3 style="margin:0 0 10px; color:#1e293b; font-size:1rem;"><i class="fas fa-file-upload" style="color:#3b82f6; margin-right:8px;"></i>Bulk Faculty Import</h3>
+                <p style="color:#64748b; font-size:0.85rem; margin:0 0 12px;">CSV must have headers: <code style="background:#e2e8f0; padding:2px 6px; border-radius:4px;">name,email,facultyid,password,facultytype,department</code><br>Password defaults to <code style="background:#e2e8f0; padding:2px 6px; border-radius:4px;">Pass@1234</code> if not provided.</p>
+                <form action="/admin/faculty/bulk-import" method="POST" enctype="multipart/form-data" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <input type="file" name="csvFile" accept=".csv" required style="border:1px solid #e2e8f0; border-radius:8px; padding:6px 10px; background:white; font-size:0.88rem;">
+                    <button type="submit" class="btn btn-primary" style="padding:8px 18px;"><i class="fas fa-upload" style="margin-right:6px;"></i>Import</button>
+                    <button type="button" onclick="document.getElementById('bulkImportForm').style.display='none'" class="btn btn-secondary" style="padding:8px 18px;">Cancel</button>
+                </form>
+            </div>
+
+            <div class="table-container" style="background:white; border-radius:12px; border:1px solid #e2e8f0; overflow-x:auto;">
+                <table class="table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #dee2e6; text-align: left; background:#f8fafc;">
+                            <th style="padding: 14px 18px; color:#64748b; font-size:0.85rem; text-transform:uppercase;">Name</th>
+                            <th style="padding: 14px 18px; color:#64748b; font-size:0.85rem; text-transform:uppercase;">Email</th>
+                            <th style="padding: 14px 18px; color:#64748b; font-size:0.85rem; text-transform:uppercase;">Faculty ID</th>
+                            <th style="padding: 14px 18px; color:#64748b; font-size:0.85rem; text-transform:uppercase;">Department</th>
+                            <th style="padding: 14px 18px; color:#64748b; font-size:0.85rem; text-transform:uppercase;">Type</th>
+                            <th style="padding: 14px 18px; color:#64748b; font-size:0.85rem; text-transform:uppercase; min-width: 280px; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="facultyTableBody">
+                        <% if (faculty.length === 0) { %>
+                            <tr><td colspan="6" style="padding: 30px; text-align: center; color:#94a3b8;">No faculty found.</td></tr>
+                        <% } else { %>
+                            <%- include('partials/faculty_rows') %>
+                        <% } %>
+                    </tbody>
+                </table>
+                <% if(faculty.length > 0 && page < totalPages) { %>
+                    <div style="text-align: center; padding: 15px; background: #f8fafc; border-top: 1px solid #f1f5f9;">
+                        <button id="loadMoreBtn" class="btn btn-secondary" data-page="<%= page %>" data-total="<%= totalPages %>" style="padding: 8px 20px;">Load More</button>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener('click', async () => {
+                let currentPage = parseInt(loadMoreBtn.getAttribute('data-page'));
+                const totalPages = parseInt(loadMoreBtn.getAttribute('data-total'));
+                if (currentPage >= totalPages) return;
+                
+                loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+                loadMoreBtn.disabled = true;
+
+                const nextPage = currentPage + 1;
+                const url = new URL(window.location.href);
+                url.searchParams.set('page', nextPage);
+                url.searchParams.set('ajax', 'true');
+
+                try {
+                    const response = await fetch(url.toString());
+                    const html = await response.text();
+                    document.getElementById('facultyTableBody').insertAdjacentHTML('beforeend', html);
+                    
+                    loadMoreBtn.setAttribute('data-page', nextPage);
+                    if (nextPage >= totalPages) {
+                        loadMoreBtn.style.display = 'none';
+                    } else {
+                        loadMoreBtn.innerHTML = 'Load More';
+                        loadMoreBtn.disabled = false;
+                    }
+                } catch (err) {
+                    console.error('Error loading more faculty:', err);
+                    loadMoreBtn.innerHTML = 'Error. Try Again';
+                    loadMoreBtn.disabled = false;
+                }
+            });
+        }
+    </script>
+</body>
+</html>

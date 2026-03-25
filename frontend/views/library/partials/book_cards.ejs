@@ -1,0 +1,42 @@
+                <% books.forEach(book => { %>
+                    <% const alreadyBorrowed = borrowedBookIds.includes(book._id.toString()); %>
+                    <div class="book-card">
+                        <div class="book-icon"><i class="fas fa-book"></i></div>
+                        <div class="book-title"><%= book.title %></div>
+                        <div class="book-author">by <%= book.author %></div>
+                        <% if(book.isbn) { %><div style="font-size:0.75rem; color:#94a3b8;">ISBN: <%= book.isbn %></div><% } %>
+                        <span class="book-cat"><%= book.category %></span>
+                        <% if(book.description) { %>
+                            <p style="font-size:0.82rem; color:#64748b; margin:0; line-height:1.5;"><%= book.description.substring(0,100) %><%= book.description.length > 100 ? '...' : '' %></p>
+                        <% } %>
+                        <div class="book-copies <%= book.availableCopies === 0 ? 'copies-none' : 'copies-ok' %>">
+                            <i class="fas fa-copy"></i>
+                            <%= book.availableCopies %> / <%= book.totalCopies %> available
+                        </div>
+                        <% if(user.role === 'student') { %>
+                            <% if(alreadyBorrowed) { %>
+                                <button class="btn" disabled style="background:#f1f5f9; color:#94a3b8; cursor:not-allowed; width:100%;">
+                                    <i class="fas fa-clock"></i> Request Pending / Active
+                                </button>
+                            <% } else if(book.availableCopies < 1) { %>
+                                <div style="display:flex; flex-direction:column; gap:8px; margin-top:auto;">
+                                    <button class="btn" disabled style="background:#fee2e2; color:#ef4444; cursor:not-allowed; width:100%;">
+                                        <i class="fas fa-times-circle"></i> Not Available
+                                    </button>
+                                    <form action="/library/books/<%= book._id %>/reserve" method="POST">
+                                        <button type="submit" class="btn" style="width:100%; background:linear-gradient(135deg,#5b21b6,#8b5cf6); color:white; border:none; cursor:pointer;"
+                                            onclick="return confirm('Reserve \'<%= book.title %>\'? You\'ll be notified when it becomes available.')">
+                                            <i class="fas fa-bookmark"></i> Reserve Book
+                                        </button>
+                                    </form>
+                                </div>
+                            <% } else { %>
+                                <form action="/library/books/<%= book._id %>/borrow" method="POST" style="margin-top:auto;">
+                                    <button type="submit" class="btn btn-primary" style="width:100%;" onclick="return confirm('Request to borrow \'<%= book.title %>\'?')">
+                                        <i class="fas fa-hand-holding-heart"></i> Request Borrow
+                                    </button>
+                                </form>
+                            <% } %>
+                        <% } %>
+                    </div>
+                <% }) %>

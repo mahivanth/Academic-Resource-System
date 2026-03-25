@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slot Notes - ARUS Faculty</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/theme.js"></script>
+</head>
+<body>
+<div class="dashboard-container">
+    <%- include('../partials/header') %>
+    <div style="padding:30px;">
+        <h1 style="margin-bottom:5px;"><i class="fas fa-sticky-note" style="color:#8b5cf6; margin-right:10px;"></i>Slot Notes</h1>
+        <p style="color:#64748b; margin-bottom:28px;">Add and review session notes for your assigned resource slots.</p>
+
+        <% if(typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+            <div class="alert alert-success"><%= success_msg %></div>
+        <% } %>
+        <% if(typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+            <div class="alert alert-danger"><%= error_msg %></div>
+        <% } %>
+
+        <!-- Add New Note -->
+        <div class="glass-card" style="padding:24px; margin-bottom:28px;">
+            <h3 style="margin:0 0 18px; color:#1e293b; font-size:1rem;"><i class="fas fa-plus-circle" style="color:#8b5cf6; margin-right:8px;"></i>Add New Note</h3>
+            <form action="/faculty/slot-notes/create" method="POST">
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:14px;">
+                    <div>
+                        <label style="display:block; font-size:0.85rem; font-weight:500; color:#475569; margin-bottom:6px;">Date *</label>
+                        <input type="date" name="date" required class="form-control"
+                            style="width:100%; padding:9px 12px; border:1px solid #e2e8f0; border-radius:10px; font-size:0.9rem;">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:0.85rem; font-weight:500; color:#475569; margin-bottom:6px;">Start Time *</label>
+                        <input type="time" name="startTime" required class="form-control"
+                            style="width:100%; padding:9px 12px; border:1px solid #e2e8f0; border-radius:10px; font-size:0.9rem;">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:0.85rem; font-weight:500; color:#475569; margin-bottom:6px;">End Time *</label>
+                        <input type="time" name="endTime" required class="form-control"
+                            style="width:100%; padding:9px 12px; border:1px solid #e2e8f0; border-radius:10px; font-size:0.9rem;">
+                    </div>
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block; font-size:0.85rem; font-weight:500; color:#475569; margin-bottom:6px;">Note *</label>
+                    <textarea name="note" rows="4" required placeholder="Write session notes, observations, or instructions..."
+                        style="width:100%; padding:10px 14px; border:1px solid #e2e8f0; border-radius:10px; font-size:0.9rem; resize:vertical; background:#f8fafc;"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="padding:10px 24px;">
+                    <i class="fas fa-save" style="margin-right:8px;"></i>Save Note
+                </button>
+            </form>
+        </div>
+
+        <!-- Notes List -->
+        <% if(notes.length === 0) { %>
+            <div class="glass-card" style="text-align:center; padding:60px 20px;">
+                <i class="fas fa-sticky-note" style="font-size:3rem; color:#cbd5e1; margin-bottom:16px; display:block;"></i>
+                <h3 style="color:#64748b;">No notes yet</h3>
+                <p style="color:#94a3b8;">Add your first session note using the form above.</p>
+            </div>
+        <% } else { %>
+            <% notes.forEach(note => { %>
+                <div class="glass-card" style="padding:20px; margin-bottom:14px; border-left:4px solid #8b5cf6;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                        <div>
+                            <div style="font-weight:600; color:#1e293b; margin-bottom:4px;">
+                                <i class="fas fa-calendar" style="color:#8b5cf6; margin-right:6px;"></i>
+                                <%= new Date(note.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) %>
+                                &nbsp;|&nbsp;
+                                <i class="fas fa-clock" style="color:#64748b; margin-right:4px;"></i>
+                                <%= note.startTime %> – <%= note.endTime %>
+                            </div>
+                            <% if(note.resource) { %>
+                                <div style="color:#64748b; font-size:0.83rem;">
+                                    <i class="fas fa-door-open" style="margin-right:4px;"></i><%= note.resource.name %>
+                                </div>
+                            <% } %>
+                        </div>
+                        <form action="/faculty/slot-notes/<%= note._id %>/delete" method="POST" onsubmit="return confirm('Delete this note?')">
+                            <button type="submit" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:0.82rem;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                    <p style="color:#334155; margin:0; line-height:1.7; background:#f8f7ff; padding:12px 14px; border-radius:10px; font-size:0.93rem;">
+                        <%= note.note %>
+                    </p>
+                </div>
+            <% }) %>
+        <% } %>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/theme.js"></script>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <%- include('../partials/header') %>
+
+        <!-- Top bar with title and notification -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div>
+                <h1 style="margin-bottom:5px;">Student Dashboard</h1>
+                <p style="margin:0;">Welcome, <%= user.name %></p>
+            </div>
+            <!-- Notification Bell -->
+            <div id="notif-trigger" onclick="toggleNotifDropdown()" style="position:relative; cursor:pointer;" title="Notifications">
+                <div style="
+                    width:42px; height:42px;
+                    border-radius:12px;
+                    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+                    display:flex; align-items:center; justify-content:center;
+                    font-size:1.1rem; color:white;
+                    box-shadow: 0 4px 12px rgba(59,130,246,0.4);
+                    transition: transform 0.2s, box-shadow 0.2s;
+                " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(59,130,246,0.5)';"
+                   onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 12px rgba(59,130,246,0.4)';">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <span id="notif-badge" style="
+                    display:none; position:absolute; top:-6px; right:-6px;
+                    background:#ef4444; color:white; border-radius:999px;
+                    padding:1px 6px; font-size:0.6rem; font-weight:700;
+                    border:2px solid white; min-width:18px; text-align:center;
+                    animation: pulse-badge 1.5s infinite;
+                ">0</span>
+                <div id="notif-dropdown" style="
+                    display:none; position:absolute; top:52px; right:0;
+                    width:320px; background:#fff;
+                    border:1px solid #e2e8f0; border-radius:16px;
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+                    z-index:1000; overflow:hidden;
+                ">
+                    <div style="padding:14px 18px; background:linear-gradient(135deg,#1e3a8a,#3b82f6); color:white; font-weight:600; font-size:0.85rem; display:flex; flex-direction:column; gap:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span><i class="fas fa-bell" style="margin-right:8px;"></i>Notifications</span>
+                            <div style="display:flex; gap:12px;">
+                                <a href="/notifications" style="color:rgba(255,255,255,0.8); font-size:0.75rem; font-weight:500;">View All</a>
+                                <span style="color:rgba(255,255,255,0.4);">|</span>
+                                <a href="javascript:void(0)" onclick="deleteAllNotifications()" style="color:rgba(255,255,255,0.8); font-size:0.75rem; font-weight:500;">Clear All</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="notif-body" style="max-height:280px; overflow-y:auto;">
+                        <div style="padding:20px; text-align:center; color:#94a3b8; font-size:0.85rem;"><i class="fas fa-spinner fa-spin" style="margin-right:6px;"></i>Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-container" style="display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap;">
+            <div class="glass-card" style="flex: 1; padding: 20px; text-align: center; min-width: 150px;">
+                <h3 style="margin:0; font-size: 2em; color: #4a90e2;">
+                    <%= typeof stats !=='undefined' ? stats.total : 0 %>
+                </h3>
+                <p style="margin:5px 0 0 0; font-weight: 500; color: #666;">Total Bookings</p>
+            </div>
+            <div class="glass-card" style="flex: 1; padding: 20px; text-align: center; min-width: 150px;">
+                <h3 style="margin:0; font-size: 2em; color: #f39c12;">
+                    <%= typeof stats !=='undefined' ? stats.pending : 0 %>
+                </h3>
+                <p style="margin:5px 0 0 0; font-weight: 500; color: #666;">Pending</p>
+            </div>
+            <div class="glass-card" style="flex: 1; padding: 20px; text-align: center; min-width: 150px;">
+                <h3 style="margin:0; font-size: 2em; color: #2ecc71;">
+                    <%= typeof stats !=='undefined' ? stats.approved : 0 %>
+                </h3>
+                <p style="margin:5px 0 0 0; font-weight: 500; color: #666;">Approved</p>
+            </div>
+            <div class="glass-card" style="flex: 1; padding: 20px; text-align: center; min-width: 150px;">
+                <h3 style="margin:0; font-size: 2em; color: #e74c3c;">
+                    <%= typeof stats !=='undefined' ? stats.cancelled : 0 %>
+                </h3>
+                <p style="margin:5px 0 0 0; font-weight: 500; color: #666;">Cancelled</p>
+            </div>
+        </div>
+
+        <div class="actions" style="margin-bottom: 30px;">
+            <a href="/resources" class="btn btn-primary">Book a Resource</a>
+        </div>
+
+        <div class="my-bookings">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0;">My Booking Calendar</h3>
+                <div>
+                    <span class="badge" style="background: #10b981; color: white; margin-right: 5px;">Approved</span>
+                    <span class="badge" style="background: #f59e0b; color: white; margin-right: 5px;">Pending</span>
+                    <span class="badge" style="background: #ef4444; color: white;">Cancelled</span>
+                </div>
+            </div>
+
+            <div class="glass-card" style="padding: 20px;">
+                <div id="calendar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Data -->
+    <script id="calendar-data" type="application/json">
+        <%- typeof calendarEvents !== 'undefined' ? calendarEvents : '[]' %>
+    </script>
+
+    <!-- FullCalendar Integration -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let eventsData = [];
+            try {
+                const dataEl = document.getElementById('calendar-data');
+                if (dataEl) {
+                    eventsData = JSON.parse(dataEl.textContent);
+                }
+            } catch (e) {
+                console.error("Error parsing calendar data", e);
+            }
+
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'listDay',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,listDay'
+                },
+                buttonText: {
+                    dayGridMonth: 'Month',
+                    listDay: 'Day'
+                },
+                themeSystem: 'standard',
+                events: eventsData,
+                height: 650,
+                eventTimeFormat: {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    meridiem: false
+                },
+                eventDidMount: function(info) {
+                    info.el.title = info.event.title + ' (' + info.event.extendedProps.status + ')';
+                }
+            });
+            
+            calendar.render();
+        });
+
+        function toggleNotifDropdown() {
+            const dd = document.getElementById('notif-dropdown');
+            dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+        }
+        function deleteAllNotifications() {
+            if (confirm('Delete all notifications?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/notifications/delete-all';
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+        document.addEventListener('click', function(e) {
+            const trigger = document.getElementById('notif-trigger');
+            if (trigger && !trigger.contains(e.target)) {
+                document.getElementById('notif-dropdown').style.display = 'none';
+            }
+        });
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/notifications/api/unread')
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.notifications) {
+                        const badge = document.getElementById('notif-badge');
+                        const body = document.getElementById('notif-body');
+                        if (data.notifications.length > 0) {
+                            badge.textContent = data.notifications.length;
+                            badge.style.display = 'block';
+                            body.innerHTML = data.notifications.map(n => `
+                                <div style="padding:14px 18px; border-bottom:1px solid #f1f5f9; display:flex; gap:12px; align-items:flex-start;">
+                                    <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#1e3a8a,#3b82f6); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                        <i class="fas fa-info" style="color:white; font-size:0.7rem;"></i>
+                                    </div>
+                                    <div style="font-size:0.82rem; color:#334155; line-height:1.4;">${n.message}</div>
+                                </div>`).join('');
+                        } else {
+                            body.innerHTML = `<div style="padding:30px 20px; text-align:center;">
+                                <div style="width:48px; height:48px; border-radius:50%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; margin:0 auto 10px;">
+                                    <i class="fas fa-bell-slash" style="color:#94a3b8; font-size:1.2rem;"></i>
+                                </div>
+                                <p style="color:#94a3b8; font-size:0.85rem; margin:0;">No new notifications</p>
+                            </div>`;
+                        }
+                    }
+                }).catch(err => console.error(err));
+        });
+    </script>
+</body>
+
+</html>

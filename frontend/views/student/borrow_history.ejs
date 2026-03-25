@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Borrow History - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/theme.js"></script>
+    <style>
+        .borrow-row[data-even="true"] { background-color: #f8fafc; }
+        .borrow-row[data-even="false"] { background-color: #fff; }
+        .borrow-row:hover { background-color: #eff6ff !important; }
+        .status-badge[data-status="pending"] { background-color: #f59e0b; }
+        .status-badge[data-status="borrowed"] { background-color: #3b82f6; }
+        .status-badge[data-status="returned"] { background-color: #10b981; }
+        .status-badge[data-status="rejected"] { background-color: #ef4444; }
+        .due-date[data-overdue="true"] { color: #ef4444; font-weight: 600; }
+        .due-date[data-overdue="false"] { color: #475569; font-weight: 400; }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <%- include('../partials/header') %>
+    <div style="padding: 30px;">
+        <h1 style="margin-bottom:5px;"><i class="fas fa-book-reader" style="color:#3b82f6;margin-right:10px;"></i>My Borrow History</h1>
+        <p style="color:#64748b; margin-bottom:28px;">All your library book borrow requests and their statuses.</p>
+
+        <% if(typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+            <div class="alert alert-success"><%= success_msg %></div>
+        <% } %>
+        <% if(typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+            <div class="alert alert-danger"><%= error_msg %></div>
+        <% } %>
+
+        <% if(borrows.length === 0) { %>
+            <div class="glass-card" style="text-align:center; padding:60px 20px;">
+                <i class="fas fa-book-open" style="font-size:3rem; color:#cbd5e1; margin-bottom:16px; display:block;"></i>
+                <h3 style="color:#64748b;">No borrow records yet</h3>
+                <p style="color:#94a3b8;">Visit the <a href="/library" style="color:#3b82f6;">Library</a> to borrow books.</p>
+            </div>
+        <% } else { %>
+            <div class="glass-card" style="overflow:hidden;">
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg,#1e40af,#3b82f6); color:white;">
+                            <th style="padding:14px 16px; text-align:left; font-weight:600;">Book Title</th>
+                            <th style="padding:14px 16px; text-align:left; font-weight:600;">Author</th>
+                            <th style="padding:14px 16px; text-align:left; font-weight:600;">Category</th>
+                            <th style="padding:14px 16px; text-align:left; font-weight:600;">Status</th>
+                            <th style="padding:14px 16px; text-align:left; font-weight:600;">Borrow Date</th>
+                            <th style="padding:14px 16px; text-align:left; font-weight:600;">Due Date</th>
+                            <th style="padding:14px 16px; text-align:left; font-weight:600;">Return Date</th>
+                            <th style="padding:14px 16px; text-align:left; font-weight:600;">Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% borrows.forEach((b, i) => { %>
+                            <tr class="borrow-row" style="border-bottom: 1px solid #e2e8f0; transition: background 0.2s;" data-even="<%= i % 2 === 0 %>">
+                                <td style="padding:13px 16px; font-weight:500; color:#1e293b;">
+                                    <%= b.book ? b.book.title : 'N/A' %>
+                                </td>
+                                <td style="padding:13px 16px; color:#475569;"><%= b.book ? b.book.author : '' %></td>
+                                <td style="padding:13px 16px; color:#475569;"><%= b.book ? b.book.category : '' %></td>
+                                <td style="padding:13px 16px;">
+                                    <span class="status-badge" style="color: white; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; text-transform: capitalize;" data-status="<%= b.status %>">
+                                        <%= b.status %>
+                                    </span>
+                                    <% if(b.overdueDays > 0) { %>
+                                        <span style="background:#ef4444; color:white; padding:3px 8px; border-radius:999px; font-size:0.72rem; margin-left:4px;">
+                                            <%= b.overdueDays %>d overdue
+                                        </span>
+                                    <% } %>
+                                </td>
+                                <td style="padding:13px 16px; color:#475569;">
+                                    <%= b.borrowDate ? new Date(b.borrowDate).toLocaleDateString() : '—' %>
+                                </td>
+                                <td class="due-date" style="padding:13px 16px;" data-overdue="<%= b.dueDate && new Date(b.dueDate) < new Date() && b.status==='borrowed' %>">
+                                    <%= b.dueDate ? new Date(b.dueDate).toLocaleDateString() : '—' %>
+                                </td>
+                                <td style="padding:13px 16px; color:#475569;">
+                                    <%= b.returnDate ? new Date(b.returnDate).toLocaleDateString() : '—' %>
+                                </td>
+                                <td style="padding:13px 16px; color:#94a3b8; font-size:0.85rem; max-width:180px;">
+                                    <%= b.notes || '—' %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } %>
+    </div>
+</div>
+</body>
+</html>

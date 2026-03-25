@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Assigned Resources - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/theme.js"></script>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <%- include('../partials/header') %>
+
+        <h1>My Assigned Resources</h1>
+        
+        <div class="grid-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+            <% if(typeof assignedResources !=='undefined' && assignedResources.length> 0) { %>
+                <% assignedResources.forEach(function(resource) { %>
+                    <div class="glass-card" style="padding: 24px; text-align: left; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                            <h3 style="margin: 0; color: var(--primary-color); font-size: 1.25em; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                <div style="background: var(--primary-light); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-cube" style="font-size: 0.9em;"></i>
+                                </div>
+                                <%= resource.name %>
+                            </h3>
+                            <span class="badge" style="background: var(--primary-light); color: var(--primary-color); font-size: 0.7em; letter-spacing: 0.5px;"><%= resource.resourceType || resource.type %></span>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <p style="margin: 0 0 8px 0; font-size: 0.9rem; color: var(--text-color); display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-users" style="color: var(--text-muted);"></i> 
+                                <span style="color: var(--text-muted);">Capacity:</span> <strong><%= resource.capacity || 'N/A' %></strong>
+                            </p>
+                            <% if(resource.description) { %>
+                                <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: flex-start; gap: 8px; line-height: 1.4;">
+                                    <i class="fas fa-info-circle" style="margin-top: 2px;"></i> 
+                                    <span><%= resource.description.substring(0, 60) %><%= resource.description.length > 60 ? '...' : '' %></span>
+                                </p>
+                            <% } %>
+                        </div>
+                        
+                        <div class="slots-container" style="background: var(--bg-color); border: 1px solid var(--border-color); padding: 16px; border-radius: 8px; margin-bottom: 20px; flex-grow: 1;">
+                            <h4 style="margin: 0 0 12px 0; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-clock" style="color: var(--warning-color);"></i> My Assigned Slots
+                            </h4>
+                            
+                            <% 
+                                let mySlots = [];
+                                if(resource.slotTimings) {
+                                    mySlots = resource.slotTimings.filter(slot => {
+                                        if(!slot.assignedFaculty) return false;
+                                        return slot.assignedFaculty.some(id => id.toString() === user._id.toString());
+                                    });
+                                }
+                            %>
+                            
+                            <% if (mySlots && mySlots.length > 0) { %>
+                                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px;">
+                                    <% mySlots.forEach(slot => { 
+                                        let startTime = '', endTime = '', label = '';
+                                        if (slot.slotTiming && typeof slot.slotTiming === 'object') {
+                                            startTime = slot.slotTiming.startTime;
+                                            endTime = slot.slotTiming.endTime;
+                                            label = slot.slotTiming.label || '';
+                                        } else {
+                                            startTime = slot.startTime || '';
+                                            endTime = slot.endTime || '';
+                                        }
+                                    %>
+                                        <li style="background: var(--card-bg); border: 1px solid var(--border-color); border-left: 3px solid var(--success-color); padding: 10px 12px; border-radius: 6px; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm);">
+                                            <strong style="color: var(--text-color); font-weight: 600;"><%= startTime %> - <%= endTime %></strong>
+                                            <% if(label) { %> 
+                                                <span class="badge" style="background: var(--bg-color); color: var(--text-muted); border: 1px solid var(--border-color); font-size: 0.7em;">
+                                                    <%= label %>
+                                                </span> 
+                                            <% } %>
+                                        </li>
+                                    <% }); %>
+                                </ul>
+                            <% } else { %>
+                                <div style="text-align: center; padding: 10px 0;">
+                                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">No specific slots assigned.</p>
+                                </div>
+                            <% } %>
+                        </div>
+                        
+
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <div class="glass-card" style="grid-column: 1 / -1; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px dashed var(--border-color); box-shadow: none; background: transparent;">
+                    <div style="background: var(--primary-light); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                        <i class="fas fa-box-open" style="font-size: 1.5rem; color: var(--primary-color);"></i>
+                    </div>
+                    <h3 style="margin: 0 0 8px 0; color: var(--text-color);">No Resources Assigned</h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0; max-width: 400px; text-align: center;">You have not been assigned to any faculty resources yet. Only resources where you are scheduled an active slot will appear here.</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= slotTiming ? 'Edit' : 'Create' %> Slot Timing - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/theme.js"></script>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <%- include('../partials/header') %>
+
+            <div class="glass-card" style="margin: 0 auto; max-width: 500px;">
+                <h2><%= slotTiming ? 'Edit' : 'Create' %> Slot Timing</h2>
+
+                <%- include('../partials/messages') %>
+
+                    <form action="/admin/slot-timings/<%= slotTiming ? slotTiming._id + '/edit' : 'create' %>"
+                        method="POST">
+                        <div class="form-group">
+                            <label>Label (optional)</label>
+                            <input type="text" name="label" value="<%= slotTiming ? (slotTiming.label || '') : '' %>"
+                                placeholder="e.g., Slot 1, Morning Session">
+                        </div>
+                        <div class="form-group">
+                            <label>Start Time</label>
+                            <input type="time" name="startTime"
+                                value="<%= slotTiming ? slotTiming.startTime : '' %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label>End Time</label>
+                            <input type="time" name="endTime"
+                                value="<%= slotTiming ? slotTiming.endTime : '' %>" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a href="/admin/slot-timings" class="btn btn-secondary">Cancel</a>
+                    </form>
+            </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: academic-resource-system
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 18.16.0
+      - key: MONGO_URI
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: PORT
+        value: 10000

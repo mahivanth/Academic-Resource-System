@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Announcements - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/theme.js"></script>
+</head>
+<body>
+<div class="dashboard-container">
+    <%- include('./partials/header') %>
+    <div style="padding:30px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:28px;">
+            <div>
+                <h1 style="margin-bottom:4px;"><i class="fas fa-bullhorn" style="color:#f59e0b; margin-right:10px;"></i>Announcements</h1>
+                <p style="color:#64748b; margin:0;">Important updates and notices from the administration.</p>
+            </div>
+        </div>
+
+        <% if(announcements.length === 0) { %>
+            <div class="glass-card" style="text-align:center; padding:50px 20px;">
+                <i class="fas fa-bullhorn" style="font-size:3rem; color:#cbd5e1; margin-bottom:16px; display:block;"></i>
+                <p style="color:#94a3b8;">No announcements posted yet.</p>
+            </div>
+        <% } else { %>
+            <div style="max-width: 900px;">
+                <% announcements.forEach(ann => { %>
+                    <div class="glass-card" style="padding:24px; margin-bottom:16px; border-left:4px solid #3b82f6; transition: transform 0.2s;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                            <div>
+                                <h3 style="margin:0; color:#1e293b; font-size:1.1rem; letter-spacing:-0.01em;"><%= ann.title %></h3>
+                                <div style="color:#94a3b8; font-size:0.8rem; margin-top:4px; display:flex; align-items:center; gap:8px;">
+                                    <span><i class="fas fa-user-circle" style="margin-right:4px;"></i>By <%= ann.createdBy ? ann.createdBy.name : 'Admin' %></span>
+                                    <span>&middot;</span>
+                                    <span><i class="far fa-calendar-alt" style="margin-right:4px;"></i><%= new Date(ann.createdAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) %></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="color:#475569; margin:0; line-height:1.7; font-size:0.95rem; white-space: pre-wrap;"><%= ann.content %></div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } %>
+    </div>
+</div>
+</body>
+</html>

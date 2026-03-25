@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borrow Requests - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge-pending  { background:#fef3c7; color:#92400e; }
+        .badge-borrowed { background:#dbeafe; color:#1e40af; }
+        .badge-returned { background:#d1fae5; color:#065f46; }
+        .badge-rejected { background:#fee2e2; color:#991b1b; }
+    </style>
+    <script src="/js/theme.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <%- include('../partials/header') %>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+            <div>
+                <h1 style="margin-bottom:4px;"><i class="fas fa-clipboard-list" style="color:#3b82f6; margin-right:10px;"></i>Borrow Requests</h1>
+                <p style="margin:0; color:#64748b;">Review and manage student book borrow requests.</p>
+            </div>
+        </div>
+
+        <%- include('../partials/messages') %>
+
+        <!-- Summary badges -->
+        <div style="display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap;">
+            <div style="background:#fef3c7; border-radius:10px; padding:12px 20px; display:flex; align-items:center; gap:10px;">
+                <i class="fas fa-clock" style="color:#92400e; font-size:1.2rem;"></i>
+                <div>
+                    <div style="font-size:1.4rem; font-weight:800; color:#92400e;"><%= borrows.filter(b => b.status === 'pending').length %></div>
+                    <div style="font-size:0.78rem; color:#92400e; font-weight:600;">Pending</div>
+                </div>
+            </div>
+            <div style="background:#dbeafe; border-radius:10px; padding:12px 20px; display:flex; align-items:center; gap:10px;">
+                <i class="fas fa-book-reader" style="color:#1e40af; font-size:1.2rem;"></i>
+                <div>
+                    <div style="font-size:1.4rem; font-weight:800; color:#1e40af;"><%= borrows.filter(b => b.status === 'borrowed').length %></div>
+                    <div style="font-size:0.78rem; color:#1e40af; font-weight:600;">Borrowed</div>
+                </div>
+            </div>
+            <div style="background:#d1fae5; border-radius:10px; padding:12px 20px; display:flex; align-items:center; gap:10px;">
+                <i class="fas fa-check-circle" style="color:#065f46; font-size:1.2rem;"></i>
+                <div>
+                    <div style="font-size:1.4rem; font-weight:800; color:#065f46;"><%= borrows.filter(b => b.status === 'returned').length %></div>
+                    <div style="font-size:0.78rem; color:#065f46; font-weight:600;">Returned</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card" style="padding:0; overflow:hidden;">
+            <table style="width:100%; border-collapse:collapse;">
+                <thead>
+                    <tr style="background:#f8fafc;">
+                        <th style="padding:14px 18px; text-align:left; font-size:0.8rem; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">Student</th>
+                        <th style="padding:14px 18px; text-align:left; font-size:0.8rem; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">Book</th>
+                        <th style="padding:14px 18px; text-align:left; font-size:0.8rem; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">Requested</th>
+                        <th style="padding:14px 18px; text-align:left; font-size:0.8rem; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">Status</th>
+                        <th style="padding:14px 18px; text-align:left; font-size:0.8rem; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">Due Date</th>
+                        <th style="padding:14px 18px; text-align:left; font-size:0.8rem; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if(borrows.length > 0) { %>
+                        <% borrows.forEach(borrow => { %>
+                        <tr style="border-top:1px solid #f1f5f9;">
+                            <td style="padding:14px 18px;">
+                                <div style="font-weight:600; color:#1e293b;"><%= borrow.student ? borrow.student.name : 'Unknown' %></div>
+                                <div style="font-size:0.8rem; color:#64748b;"><%= borrow.student ? (borrow.student.rollNo || borrow.student.email) : '' %></div>
+                            </td>
+                            <td style="padding:14px 18px; font-weight:500; color:#1e40af;"><%= borrow.book ? borrow.book.title : 'Unknown' %></td>
+                            <td style="padding:14px 18px; color:#64748b; font-size:0.85rem;"><%= borrow.requestedAt ? new Date(borrow.requestedAt).toDateString() : '-' %></td>
+                            <td style="padding:14px 18px;">
+                                <span class="status-badge badge-<%= borrow.status %>"><%= borrow.status %></span>
+                            </td>
+                            <td style="padding:14px 18px; color:#64748b; font-size:0.85rem;">
+                                <%= borrow.dueDate ? new Date(borrow.dueDate).toDateString() : '-' %>
+                            </td>
+                            <td style="padding:14px 18px;">
+                                <% if(borrow.status === 'pending') { %>
+                                    <form action="/library/borrows/<%= borrow._id %>/approve" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn btn-success" style="padding:5px 12px; font-size:0.8rem; margin-right:4px;"><i class="fas fa-check"></i> Approve</button>
+                                    </form>
+                                    <form action="/library/borrows/<%= borrow._id %>/reject" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn btn-danger" style="padding:5px 12px; font-size:0.8rem;" onclick="return confirm('Reject this request?')"><i class="fas fa-times"></i> Reject</button>
+                                    </form>
+                                <% } else if(borrow.status === 'borrowed') { %>
+                                    <form action="/library/borrows/<%= borrow._id %>/return" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn btn-secondary" style="padding:5px 12px; font-size:0.8rem;" onclick="return confirm('Mark this book as returned?')"><i class="fas fa-undo"></i> Mark Returned</button>
+                                    </form>
+                                <% } else { %>
+                                    <span style="color:#94a3b8; font-size:0.85rem;">—</span>
+                                <% } %>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="6" style="padding:40px; text-align:center; color:#94a3b8;">
+                                <i class="fas fa-clipboard" style="font-size:2rem; margin-bottom:10px; display:block;"></i>
+                                No borrow requests yet.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

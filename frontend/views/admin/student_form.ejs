@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= student ? 'Edit Student' : 'Add Student' %> - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/theme.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <%- include('../partials/header') %>
+        <div class="content" style="max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <%- include('../partials/messages') %>
+            <h1><%= student ? 'Edit Student' : 'Add Student' %></h1>
+            <form action="/admin/students/<%= student ? student._id + '/edit' : 'create' %>" method="POST">
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" class="form-control" value="<%= student ? student.name : '' %>" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" class="form-control" value="<%= student ? student.email : '' %>" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="password"><%= student ? 'Password (leave blank to keep current)' : 'Password' %></label>
+                    <input type="password" id="password" name="password" class="form-control" <%= student ? '' : 'required' %> style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="rollNo">Roll No</label>
+                    <input type="text" id="rollNo" name="rollNo" class="form-control" value="<%= student ? student.rollNo : '' %>" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="year">Year</label>
+                    <select id="year" name="year" class="form-control" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="">Select Year (Optional)</option>
+                        <option value="1" <%= student && student.year === 1 ? 'selected' : '' %>>1st Year</option>
+                        <option value="2" <%= student && student.year === 2 ? 'selected' : '' %>>2nd Year</option>
+                        <option value="3" <%= student && student.year === 3 ? 'selected' : '' %>>3rd Year</option>
+                        <option value="4" <%= student && student.year === 4 ? 'selected' : '' %>>4th Year</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="department">Department</label>
+                    <input type="text" id="department" name="department" class="form-control" value="<%= student ? (student.department || '') : '' %>" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;"><%= student ? 'Update Student' : 'Create Student' %></button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

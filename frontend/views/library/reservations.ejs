@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Reservations - ARUS Library</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/theme.js"></script>
+    <style>
+        .res-row[data-even="true"] { background-color: #f8fafc; }
+        .res-row[data-even="false"] { background-color: #fff; }
+        .res-row:hover { background-color: #f5f3ff !important; }
+        .status-badge[data-status="waiting"] { background-color: #f59e0b; }
+        .status-badge[data-status="notified"] { background-color: #3b82f6; }
+        .avail-count[data-available="true"] { color: #10b981; }
+        .avail-count[data-available="false"] { color: #ef4444; }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <%- include('../partials/header') %>
+    <div style="padding:30px;">
+        <h1 style="margin-bottom:5px;"><i class="fas fa-bookmark" style="color:#8b5cf6; margin-right:10px;"></i>Book Reservations</h1>
+        <p style="color:#64748b; margin-bottom:28px;">Students waiting for unavailable books. Notify them when a copy becomes available.</p>
+
+        <% if(typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+            <div class="alert alert-success"><%= success_msg %></div>
+        <% } %>
+        <% if(typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+            <div class="alert alert-danger"><%= error_msg %></div>
+        <% } %>
+
+        <% if(reservations.length === 0) { %>
+            <div class="glass-card" style="text-align:center; padding:60px 20px;">
+                <i class="fas fa-bookmark" style="font-size:3rem; color:#cbd5e1; margin-bottom:16px; display:block;"></i>
+                <h3 style="color:#64748b;">No pending reservations</h3>
+                <p style="color:#94a3b8;">Students will appear here when they reserve unavailable books.</p>
+            </div>
+        <% } else { %>
+            <div class="glass-card" style="overflow:hidden;">
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:linear-gradient(135deg,#5b21b6,#8b5cf6); color:white;">
+                            <th style="padding:14px 16px; text-align:left;">Queue #</th>
+                            <th style="padding:14px 16px; text-align:left;">Book</th>
+                            <th style="padding:14px 16px; text-align:left;">Student</th>
+                            <th style="padding:14px 16px; text-align:left;">Reserved On</th>
+                            <th style="padding:14px 16px; text-align:left;">Status</th>
+                            <th style="padding:14px 16px; text-align:left;">Available Copies</th>
+                            <th style="padding:14px 16px; text-align:left;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% reservations.forEach((r, i) => { %>
+                            <tr class="res-row" style="border-bottom: 1px solid #e2e8f0;" data-even="<%= i % 2 === 0 %>">
+                                <td style="padding:13px 16px; font-weight:700; color:#8b5cf6; font-size:1.1rem;">#<%= r.queuePosition %></td>
+                                <td style="padding:13px 16px;">
+                                    <div style="font-weight:500; color:#1e293b;"><%= r.book ? r.book.title : 'N/A' %></div>
+                                    <div style="color:#94a3b8; font-size:0.82rem;"><%= r.book ? r.book.author : '' %></div>
+                                </td>
+                                <td style="padding:13px 16px;">
+                                    <div style="font-weight:500; color:#1e293b;"><%= r.student ? r.student.name : 'N/A' %></div>
+                                    <div style="color:#94a3b8; font-size:0.82rem;"><%= r.student ? r.student.email : '' %></div>
+                                </td>
+                                <td style="padding:13px 16px; color:#64748b; font-size:0.85rem;">
+                                    <%= new Date(r.createdAt).toLocaleDateString() %>
+                                </td>
+                                <td style="padding:13px 16px;">
+                                    <span class="status-badge" style="color: white; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; text-transform: capitalize;" data-status="<%= r.status %>">
+                                        <%= r.status %>
+                                    </span>
+                                </td>
+                                <td style="padding:13px 16px;">
+                                    <span class="avail-count" style="font-weight: 600;" data-available="<%= r.book && r.book.availableCopies > 0 %>">
+                                        <%= r.book ? r.book.availableCopies : 0 %>
+                                    </span>
+                                </td>
+                                <td style="padding:13px 16px;">
+                                    <% if(r.status === 'waiting') { %>
+                                        <form action="/library/reservations/<%= r._id %>/notify" method="POST">
+                                            <button type="submit" style="background:#3b82f6; color:white; border:none; padding:7px 14px; border-radius:8px; cursor:pointer; font-size:0.82rem; font-weight:600;">
+                                                <i class="fas fa-bell" style="margin-right:4px;"></i>Notify
+                                            </button>
+                                        </form>
+                                    <% } else { %>
+                                        <span style="color:#94a3b8; font-size:0.82rem;"><i class="fas fa-check" style="color:#10b981; margin-right:4px;"></i>Notified</span>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } %>
+    </div>
+</div>
+</body>
+</html>

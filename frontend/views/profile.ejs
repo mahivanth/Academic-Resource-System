@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/theme.js"></script>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <%- include('partials/header') %>
+
+            <div class="glass-card" style="margin: 0 auto; max-width: 600px;">
+                <h2>User Profile</h2>
+
+                <!-- Notifications Section Removed -->
+
+                <div class="profile-info">
+                    <p><strong>Name:</strong>
+                        <%= user.name %>
+                    </p>
+                    <p><strong>Email:</strong>
+                        <%= user.email %>
+                    </p>
+                    <p><strong>Role:</strong>
+                        <%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %>
+                    </p>
+
+                    <% if(user.role==='student' ) { %>
+                        <p><strong>Roll No:</strong>
+                            <%= user.rollNo || 'Not Set' %>
+                        </p>
+                        <% } else if(user.role==='faculty' ) { %>
+                            <p><strong>Faculty ID:</strong>
+                                <%= user.facultyId || 'Not Set' %>
+                            </p>
+                            <% } %>
+                </div>
+
+                <hr class="divider">
+
+                <h3>Security</h3>
+                <button id="change-password-btn" class="btn btn-warning" style="width: 100%;">
+                    <i class="fas fa-key"></i> Change Password
+                </button>
+            </div>
+    </div>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.getElementById('change-password-btn').addEventListener('click', async () => {
+            // 1. Ask for Old Password
+            const { value: oldPassword } = await Swal.fire({
+                title: 'Verify Identity',
+                text: 'Please enter your current password',
+                input: 'password',
+                inputPlaceholder: 'Current Password',
+                showCancelButton: true,
+                confirmButtonText: 'Verify',
+                confirmButtonColor: '#3498db',
+                cancelButtonColor: '#e74c3c',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'You need to write something!'
+                    }
+                }
+            });
+
+            if (oldPassword) {
+                // 2. Verify Old Password
+                try {
+                    Swal.showLoading();
+                    const response = await fetch('/users/verify-password', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ oldPassword })
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // 3. Ask for New Password
+                        const { value: newPassword } = await Swal.fire({
+                            title: 'New Password',
+                            text: 'Enter your new password',
+                            input: 'password',
+                            inputPlaceholder: 'New Password',
+                            showCancelButton: true,
+                            confirmButtonText: 'Change Password',
+                            confirmButtonColor: '#2ecc71',
+                            cancelButtonColor: '#e74c3c',
+                            inputValidator: (value) => {
+                                if (!value) {
+                                    return 'You need to write something!'
+                                }
+                                if (value.length < 6) {
+                                    return 'Password must be at least 6 characters'
+                                }
+                            }
+                        });
+
+                        if (newPassword) {
+                            // 4. Update Password
+                            const updateResponse = await fetch('/users/change-password', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify({ newPassword })
+                            });
+                            const updateData = await updateResponse.json();
+
+                            if (updateData.success) {
+                                Swal.fire('Success!', 'Your password has been changed.', 'success');
+                            } else {
+                                Swal.fire('Error!', updateData.message || 'Could not change password', 'error');
+                            }
+                        }
+                    } else {
+                        Swal.fire('Error!', 'Incorrect current password.', 'error');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    Swal.fire('Error!', 'Something went wrong.', 'error');
+                }
+            }
+        });
+    </script>
+    </div>
+</body>
+
+</html>

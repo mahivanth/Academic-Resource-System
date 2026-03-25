@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Students - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Modern folder styles */
+        details.dept-folder { 
+            transition: all 0.3s ease; 
+        }
+        details.dept-folder[open] {
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        /* Show the year search input if the folder is expanded */
+        details.year-folder:not([open]) .year-search-container {
+            display: none !important;
+        }
+        details.year-folder[open] .year-search-container {
+            display: flex !important;
+        }
+    </style>
+    <script src="/js/theme.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <%- include('../partials/header') %>
+        <div class="content" style="max-width: 1000px; margin: 0 auto; width: 100%;">
+            <%- include('../partials/messages') %>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap:wrap; gap:10px;">
+                <h1>Manage Students</h1>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <a href="/admin/students/create" class="btn btn-primary" style="display: inline-flex; align-items: center; height: 38px;"><i class="fas fa-plus" style="margin-right: 8px;"></i> Add Student</a>
+                    <button id="importBtn" class="btn btn-secondary" style="background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; display: inline-flex; align-items: center; height: 38px;">
+                        <i class="fas fa-file-csv" style="margin-right: 8px;"></i> Bulk Import CSV
+                    </button>
+                </div>
+            </div>
+
+            <div id="bulkImportForm" style="display:none; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:20px;">
+                <h3 style="margin:0 0 10px; color:#1e293b; font-size:1rem;"><i class="fas fa-file-upload" style="color:#3b82f6; margin-right:8px;"></i>Bulk Student Import</h3>
+                <p style="color:#64748b; font-size:0.85rem; margin:0 0 12px;">CSV must have headers: <code style="background:#e2e8f0; padding:2px 6px; border-radius:4px;">name,email,rollno,password,year,department</code><br>Password defaults to <code style="background:#e2e8f0; padding:2px 6px; border-radius:4px;">Pass@1234</code> if not provided.</p>
+                <form action="/admin/students/bulk-import" method="POST" enctype="multipart/form-data" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <input type="file" name="csvFile" accept=".csv" required style="border:1px solid #e2e8f0; border-radius:8px; padding:6px 10px; background:white; font-size:0.88rem;">
+                    <button type="submit" class="btn btn-primary" style="padding:8px 18px;"><i class="fas fa-upload" style="margin-right:6px;"></i>Import</button>
+                    <button type="button" id="cancelImport" class="btn btn-secondary" style="padding:8px 18px;">Cancel</button>
+                </form>
+            </div>
+
+            <script>
+                const importBtn = document.getElementById('importBtn');
+                const bulkImportForm = document.getElementById('bulkImportForm');
+                const cancelImport = document.getElementById('cancelImport');
+
+                if (importBtn) {
+                    importBtn.addEventListener('click', () => {
+                        bulkImportForm.style.display = bulkImportForm.style.display === 'none' ? 'block' : 'none';
+                    });
+                }
+                if (cancelImport) {
+                    cancelImport.addEventListener('click', () => {
+                        bulkImportForm.style.display = 'none';
+                    });
+                }
+            </script>
+
+            <!-- Department & Year Folders -->
+            <% const depts = Object.keys(groupedStudents).sort(); %>
+            <% if (depts.length === 0) { %>
+                <div style="background:white; border-radius:12px; border:1px solid #e2e8f0; padding: 40px; text-align: center; color:#94a3b8;">
+                    <i class="fas fa-users-slash" style="font-size: 3rem; margin-bottom: 20px; display: block;"></i>
+                    No students found.
+                </div>
+            <% } else { %>
+                <% depts.forEach(dept => { %>
+                    <details class="dept-folder" style="background:white; border-radius:12px; border:1px solid #e2e8f0; margin-bottom: 20px;">
+                        <summary style="padding: 15px 20px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; list-style: none; transition: background 0.2s;">
+                            <style>
+                                details.dept-folder summary::-webkit-details-marker,
+                                details.year-folder summary::-webkit-details-marker { display: none; }
+                                details.dept-folder summary:hover,
+                                details.year-folder summary:hover { background: #f8fafc; }
+                                details.dept-folder[open] > summary { border-bottom: 1px solid #f1f5f9; background: #f8fafc; border-radius: 12px 12px 0 0; }
+                                details.year-folder[open] > summary { border-bottom: 1px solid #f1f5f9; background: #f8fafc; border-radius: 8px 8px 0 0; }
+                                details.dept-folder[open] > summary .fa-chevron-right,
+                                details.year-folder[open] > summary .fa-chevron-right { transform: rotate(90deg); }
+                            </style>
+                            <div style="width: 32px; height: 32px; background: #eff6ff; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-folder" style="color: #3b82f6;"></i>
+                            </div>
+                            <span style="color: #1e293b;"><%= dept %></span>
+                            <% 
+                                let totalInDept = 0;
+                                Object.values(groupedStudents[dept]).forEach(arr => totalInDept += arr.length);
+                            %>
+                            <span style="font-size: 0.82rem; color: #64748b; font-weight: 500; margin-left: 8px; background: #f1f5f9; padding: 2px 8px; border-radius: 12px;"><%= totalInDept %> Students</span>
+                            <i class="fas fa-chevron-right" style="font-size: 0.8rem; color: #94a3b8; margin-left: auto;"></i>
+                        </summary>
+                        
+                        <div style="padding: 15px 20px;">
+                            <% const years = Object.keys(groupedStudents[dept]).sort(); %>
+                            <% years.forEach(year => { %>
+                                <details class="year-folder" style="margin-bottom: 12px; border: 1px solid #f1f5f9; border-radius: 8px;">
+                                    <summary style="padding: 12px 15px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 10px; list-style: none; transition: background 0.2s;">
+                                        <div style="width: 24px; height: 24px; background: #f5f3ff; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-calendar-alt" style="color: #8b5cf6; font-size: 0.85rem;"></i>
+                                        </div>
+                                        <span style="font-size: 0.95rem; color: #4b5563; white-space: nowrap;"><%= year %></span>
+                                        <span style="font-size: 0.75rem; color: #94a3b8; margin-left: 8px; white-space: nowrap;"><%= groupedStudents[dept][year].length %> Students</span>
+                                        
+                                        <!-- Year Search Bar (Visible only when open) -->
+                                        <div class="year-search-container" style="margin-left: auto; margin-right: 15px; display: none; align-items: center; position: relative; width: 100%; max-width: 250px;">
+                                            <i class="fas fa-search" style="position: absolute; left: 10px; color: #94a3b8; font-size: 0.8rem;"></i>
+                                            <input type="text" placeholder="Search..." 
+                                                   class="year-search-input" 
+                                                   style="width: 100%; padding: 6px 12px 6px 30px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.85rem; outline: none; transition: border-color 0.2s;"
+                                                   onclick="event.stopPropagation()"
+                                                   onfocus="this.style.borderColor='#3b82f6'"
+                                                   onblur="this.style.borderColor='#e2e8f0'">
+                                        </div>
+                                        
+                                        <i class="fas fa-chevron-right" style="font-size: 0.7rem; color: #cbd5e1;"></i>
+                                    </summary>
+                                    <div style="overflow-x:auto;">
+                                        <table class="table" style="width: 100%; border-collapse: collapse;">
+                                            <thead>
+                                                <tr style="border-bottom: 2px solid #f1f5f9; background:#fafafa;">
+                                                    <th style="padding: 12px 15px; color:#64748b; font-size:0.75rem; text-transform:uppercase; letter-spacing: 0.05em; text-align: center; width: 25%;">Name</th>
+                                                    <th style="padding: 12px 15px; color:#64748b; font-size:0.75rem; text-transform:uppercase; letter-spacing: 0.05em; text-align: center; width: 35%;">Email</th>
+                                                    <th style="padding: 12px 15px; color:#64748b; font-size:0.75rem; text-transform:uppercase; letter-spacing: 0.05em; text-align: center; width: 15%;">Roll No</th>
+                                                    <th style="padding: 12px 15px; color:#64748b; font-size:0.75rem; text-transform:uppercase; letter-spacing: 0.05em; text-align: center; width: 25%;">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <%- include('partials/student_rows', { students: groupedStudents[dept][year] }) %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </details>
+                            <% }); %>
+                        </div>
+                    </details>
+                <% }); %>
+            <% } %>
+        </div>
+
+    <script>
+        // Real-time student filtering within year folders
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInputs = document.querySelectorAll('.year-search-input');
+            
+            searchInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    const term = this.value.toLowerCase().trim();
+                    const yearFolder = this.closest('.year-folder');
+                    const rows = yearFolder.querySelectorAll('tbody tr');
+                    let visibleCount = 0;
+
+                    rows.forEach(row => {
+                        const name = row.cells[0].textContent.toLowerCase();
+                        const email = row.cells[1].textContent.toLowerCase();
+                        const rollNo = row.cells[2].textContent.toLowerCase();
+
+                        if (name.includes(term) || email.includes(term) || rollNo.includes(term)) {
+                            row.style.display = '';
+                            visibleCount++;
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+
+                    // Update student count badge temporarily if needed, 
+                    // or just show "No results" if visibleCount is 0
+                    const noResultsRow = yearFolder.querySelector('.no-results-row');
+                    if (visibleCount === 0) {
+                        if (!noResultsRow) {
+                            const tbody = yearFolder.querySelector('tbody');
+                            const tr = document.createElement('tr');
+                            tr.className = 'no-results-row';
+                            tr.innerHTML = `<td colspan="4" style="padding: 20px; text-align: center; color: #94a3b8; font-size: 0.9rem;">No students match your search.</td>`;
+                            tbody.appendChild(tr);
+                        }
+                    } else if (noResultsRow) {
+                        noResultsRow.remove();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Requests - ARUS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/theme.js"></script>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <%- include('../partials/header') %>
+
+            <h1>Booking Requests</h1>
+
+            <!-- Filters -->
+            <div class="filters"
+                style="margin-bottom: 20px; display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                <div class="form-group" style="margin-bottom: 0; flex: 1; max-width: 200px;">
+                    <label for="filterDate">Date:</label>
+                    <input type="date" id="filterDate" class="form-control">
+                </div>
+                <div class="form-group" style="margin-bottom: 0; flex: 1; max-width: 200px;">
+                    <label for="filterStatus">Status:</label>
+                    <select id="filterStatus" class="form-control">
+                        <option value="all">All</option>
+                        <option value="approved">Approved</option>
+                        <option value="pending">Pending</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <button class="btn btn-secondary" onclick="resetFilters()" style="margin-bottom: 1px;">Reset</button>
+            </div>
+
+            <div class="glass-card">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th>Resource</th>
+                            <th>Student</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if(typeof bookings !=='undefined' && bookings.length> 0) { %>
+                            <% bookings.forEach(function(booking) { %>
+                                <tr class="booking-row" data-date-iso="<%= booking.date.toISOString().split('T')[0] %>"
+                                    data-status="<%= booking.status %>">
+                                    <td>
+                                        <%= booking.resource ? booking.resource.name : 'Unknown' %>
+                                    </td>
+                                    <td>
+                                        <%= booking.user ? booking.user.name : 'Unknown' %>
+                                    </td>
+                                    <td>
+                                        <%= booking.date.toDateString() %>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-<%= booking.status %>">
+                                            <%= booking.status %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <% if(user && user.facultyType === 'teaching') { %>
+                                            <% if(booking.status==='pending' ) { %>
+                                                <form action="/bookings/<%= booking._id %>/approve" method="POST"
+                                                    style="display:inline;">
+                                                    <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                                </form>
+                                            <% } %>
+
+                                            <% if(booking.status !=='cancelled' ) { %>
+                                                <form action="/bookings/<%= booking._id %>/cancel" method="POST"
+                                                    style="display:inline;">
+                                                    <button type="submit" class="btn btn-sm btn-danger"
+                                                        onclick="return confirm('Cancel this booking?')">Cancel</button>
+                                                </form>
+                                            <% } %>
+                                        <% } else { %>
+                                            <!-- Non-Teaching Faculty / Interns cannot approve/cancel slots -->
+                                            <span style="color: gray; font-size: 0.9em;">N/A</span>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                                    <% } else { %>
+                                        <tr>
+                                            <td colspan="5">No booking requests found.</td>
+                                        </tr>
+                                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dateInput = document.getElementById('filterDate');
+            const statusSelect = document.getElementById('filterStatus');
+
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+
+            // Event listeners
+            dateInput.addEventListener('change', filterBookings);
+            statusSelect.addEventListener('change', filterBookings);
+
+            // Initial filter
+            filterBookings();
+        });
+
+        function filterBookings() {
+            const selectedDate = document.getElementById('filterDate').value;
+            const selectedStatus = document.getElementById('filterStatus').value;
+            const rows = document.querySelectorAll('.booking-row');
+
+            rows.forEach(row => {
+                const rowDate = row.getAttribute('data-date-iso');
+                const rowStatus = row.getAttribute('data-status');
+
+                let showRow = true;
+
+                // Date filter
+                if (selectedDate && rowDate !== selectedDate) {
+                    showRow = false;
+                }
+
+                // Status filter
+                if (selectedStatus !== 'all' && rowStatus !== selectedStatus) {
+                    showRow = false;
+                }
+
+                row.style.display = showRow ? '' : 'none';
+            });
+        }
+
+        function resetFilters() {
+            const dateInput = document.getElementById('filterDate');
+            const statusSelect = document.getElementById('filterStatus');
+
+            // Reset to today
+            dateInput.value = new Date().toISOString().split('T')[0];
+            statusSelect.value = 'all';
+
+            filterBookings();
+        }
+    </script>
+    <style>
+        .btn-sm {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-right: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 9999px;
+        }
+
+        .btn-success {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        td,
+        th {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</body>
+
+</html>
