@@ -8,6 +8,9 @@ const path = require('path');
 
 const app = express();
 
+// Trust proxy (required for Render/production)
+app.set('trust proxy', 1);
+
 // Database Connection & Server Start
 mongoose.connect(process.env.MONGO_URI)
     .then(() => {
