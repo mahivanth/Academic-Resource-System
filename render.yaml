@@ -9,7 +9,7 @@ services:
       - key: NODE_VERSION
         value: 18.16.0
       - key: MONGO_URI
-        sync: false
+        sync: mongodb+srv://mahi:1234mahi@cluster0.hmu4jd1.mongodb.net/arus?retryWrites=true&w=majority&appName=Cluster0
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
