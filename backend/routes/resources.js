@@ -272,6 +272,21 @@ router.post('/:id/book', ensureAuthenticated, async (req, res) => {
         const queryDate = new Date(date);
         queryDate.setUTCHours(0, 0, 0, 0);
 
+        // Check if this user has already booked this exact slot on this day
+        const existingUserBooking = await Booking.findOne({
+            resource: resource._id,
+            user: targetUser,
+            date: queryDate,
+            startTime: slotTimes.startTime,
+            endTime: slotTimes.endTime,
+            status: { $ne: 'cancelled' }
+        });
+
+        if (existingUserBooking) {
+            req.flash('error_msg', 'You have already placed a booking for this specific slot and date.');
+            return res.redirect(`/resources/${req.params.id}`);
+        }
+
         // Count existing bookings for this slot and date
         const bookingCount = await Booking.countDocuments({
             resource: resource._id,
