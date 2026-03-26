@@ -194,9 +194,9 @@ router.get('/:id/availability', ensureAuthenticated, async (req, res) => {
                 index,
                 startTime: t.startTime,
                 endTime: t.endTime,
-                capacity: resource.capacity,
+                capacity: resource.capacity || 1,
                 booked: count,
-                available: resource.capacity - count
+                available: Math.max(0, (resource.capacity || 1) - count)
             };
         });
 
@@ -281,8 +281,8 @@ router.post('/:id/book', ensureAuthenticated, async (req, res) => {
             status: { $ne: 'cancelled' }
         });
 
-        if (bookingCount >= resource.capacity) {
-            req.flash('error_msg', 'This slot has reached its maximum capacity for the selected date.');
+        if (bookingCount >= (resource.capacity || 1)) {
+            req.flash('error_msg', `This slot has already reached its maximum capacity (${resource.capacity || 1}) for the selected date.`);
             return res.redirect(`/resources/${req.params.id}`);
         }
 

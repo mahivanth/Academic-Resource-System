@@ -36,7 +36,7 @@ router.post('/:id/approve', ensureAuthenticated, async (req, res) => {
             return res.redirect('/dashboard');
         }
 
-        const existingApproved = await Booking.findOne({
+        const approvedCount = await Booking.countDocuments({
             resource: booking.resource._id,
             date: booking.date,
             startTime: booking.startTime,
@@ -44,8 +44,8 @@ router.post('/:id/approve', ensureAuthenticated, async (req, res) => {
             status: 'approved'
         });
 
-        if (existingApproved) {
-            req.flash('error_msg', 'This slot has already been approved for another user.');
+        if (approvedCount >= (booking.resource.capacity || 1)) {
+            req.flash('error_msg', `This slot has already reached its full capacity (${booking.resource.capacity}).`);
             return res.redirect('back');
         }
 
